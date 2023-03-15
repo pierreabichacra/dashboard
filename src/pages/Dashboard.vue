@@ -606,13 +606,15 @@ export default {
     attachNode() {
       let cNode = localStorage.getItem("customNode");
       if (cNode) {
-        this.web3 = new Web3(cNode);
+        let prov = new Web3.providers.HttpProvider(cNode);
+        this.web3 = new Web3(prov);
         this.httpsProvider = new ethers.providers.JsonRpcProvider(cNode)
         this.$notify("custom node being used with RPC: "+cNode)
       } else {
-        this.$notify("default node being used")
-        this.web3 = new Web3(this.defaultNode);
+        let prov = new Web3.providers.HttpProvider(cNode);
+        this.web3 = new Web3(prov);
         this.httpsProvider = new ethers.providers.JsonRpcProvider(this.defaultNode)
+        this.$notify("default node being used")
       }
     },
   },
