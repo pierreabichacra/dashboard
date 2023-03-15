@@ -3,25 +3,23 @@
     <div class="container-fluid">
       <ul class="nav">
         <li class="nav-item">
-          <a class="nav-link" href="http://www.creative-tim.com">
-            Creative Tim
+          <a class="nav-link" target="_blank" href="https://etherscan.io">
+            etherscan
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="http://blog.creative-tim.com">
-            Blog
+          <a class="nav-link" target="_blank" href="https://www.dextools.io/app/en/ether/pair-explorer/0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640">
+            Dextools
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="http://www.creative-tim.com/license">
-            Licenses
+          <a class="nav-link" target="_blank" href="https://app.uniswap.org/#/swap">
+            Uniswap
           </a>
         </li>
       </ul>
       <div class="copyright">
-        © {{year}} made with <i class="tim-icons icon-heart-2"></i> by
-        <a href="https://www.binarcode.com" target="_blank" rel="noopener">Binar Code</a>&nbsp;&
-        <a href="https://www.creative-tim.com" target="_blank" rel="noopener">Creative Tim</a> for a better web.
+        {{ today }} {{ now }}
       </div>
     </div>
   </footer>
@@ -30,7 +28,8 @@
   export default {
     data() {
       return {
-        year: new Date().getFullYear()
+        today: new Date().toLocaleDateString(),
+        now: new Date().toLocaleTimeString(),
       }
     }
   };

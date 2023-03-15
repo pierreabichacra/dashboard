@@ -5,3 +5,6 @@ yarn.lock
 npm-debug.log
 .idea/
 dist/
+
+#Electron-builder output
+/dist_electron
