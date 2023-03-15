@@ -21,6 +21,16 @@
             </div>
           </template>
           <div class="row d-flex align-items-center">
+            <div class="col-10 ">
+              <base-input label="Custom Node" placeholder="Custom Node" v-model="customNode">
+              </base-input>
+            </div>
+            <div class="col-2">
+              <base-button type="primary" @click="saveCustomNode" fill>save</base-button>
+            </div>
+          </div>
+          <div class="row d-flex align-items-center">
+            
             <div class="col-5 col-sm-3">
               <base-input label="Wallet Address" placeholder="your wallet address" v-model="walletAddress">
               </base-input>
@@ -222,6 +232,12 @@ export default {
     }
   },
   methods: {
+    saveCustomNode(){
+      if(this.customNode){
+        localStorage.setItem("customNode", this.customNode);
+        this.$notify("custom node saved with rpc "+this.customNode)
+      }
+    },
     switchWallet(w) {
       console.log(this.selectedWallet)
       this.walletAddress = this.selectedWallet.address;
@@ -592,10 +608,11 @@ export default {
       if (cNode) {
         this.web3 = new Web3(cNode);
         this.httpsProvider = new ethers.providers.JsonRpcProvider(cNode)
+        this.$notify("custom node being used with RPC: "+cNode)
       } else {
+        this.$notify("default node being used")
         this.web3 = new Web3(this.defaultNode);
         this.httpsProvider = new ethers.providers.JsonRpcProvider(this.defaultNode)
-
       }
     },
   },
