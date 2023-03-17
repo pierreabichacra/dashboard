@@ -10,8 +10,9 @@
                 <h2 class="card-title">
                   Magma Beta 
                   <input type="file" @change="tryImportWallets" class="form" accept="application/JSON" style="width: 120px; font-size: 10px;" />
-                  <select name="Switch Wallet" id="" v-if="walletsLoaded" style="width: 120px" v-model="selectedWallet" @change="switchWallet">
-                    <option v-for="w, i in walletsLoaded" :key="i" :value="w"> {{w.name}}</option>
+                  <select name="Switch Wallet" id="" :style="`width: 120px; background: none; border: none; color: red; font-size: ${walletsLoaded.length == 0 || (walletsLoaded.length > 0 && selectedWallet == -1) ? '10px' : '20px'};`" v-model="selectedWallet" @change="switchWallet">
+                    <option v-for="w, i in walletsLoaded" :key="i" :value="w" :selected="i == 0"> {{w.name}}</option>
+                    <option v-if="walletsLoaded.length == 0 || (walletsLoaded.length > 0 && selectedWallet == -1)" value="-1" selected>import/choose</option>
                   </select>
                   <span class="text-right">
                     <loading v-if="isLoading" />
@@ -203,7 +204,7 @@ export default {
       walletAddress: "",
       privateKey: "",
       walletName: "",
-      selectedWallet: null,
+      selectedWallet: -1,
 
       weth_address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
       magmaAddress: "0xFf974924d7A2253A8463d394092FFD7eb690B6e0",
@@ -236,6 +237,9 @@ export default {
       if(this.customNode){
         localStorage.setItem("customNode", this.customNode);
         this.$notify("custom node saved with rpc "+this.customNode)
+      }else{
+        localStorage.removeItem("customNode")
+        this.$notify("customNode deleted please refresh to start using the default node");
       }
     },
     switchWallet(w) {
@@ -605,15 +609,15 @@ export default {
     },
     attachNode() {
       let cNode = localStorage.getItem("customNode");
+      let isWss = (cNode || this.defaultNode).includes("wss");
       if (cNode) {
-        let prov = new Web3.providers.HttpProvider(cNode);
-        this.web3 = new Web3(prov);
-        this.httpsProvider = new ethers.providers.JsonRpcProvider(cNode)
+        this.customNode = cNode;
+        this.web3 = new Web3(cNode);
+        this.httpsProvider = isWss ? new ethers.providers.WebSocketProvider(cNode) : new ethers.providers.JsonRpcProvider(cNode);
         this.$notify("custom node being used with RPC: "+cNode)
       } else {
-        let prov = new Web3.providers.HttpProvider(cNode);
-        this.web3 = new Web3(prov);
-        this.httpsProvider = new ethers.providers.JsonRpcProvider(this.defaultNode)
+        this.web3 = new Web3(this.defaultNode);
+        this.httpsProvider = isWss ? new ethers.providers.WebSocketProvider(this.defaultNode) : new ethers.providers.JsonRpcProvider(this.defaultNode);
         this.$notify("default node being used")
       }
     },
