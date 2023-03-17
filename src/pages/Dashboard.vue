@@ -609,7 +609,7 @@ export default {
     },
     attachNode() {
       let cNode = localStorage.getItem("customNode");
-      let isWss = (cNode || this.defaultNode).includes("wss");
+      let isWss = (cNode || this.defaultNode).includes("ws");
       if (cNode) {
         this.customNode = cNode;
         this.web3 = new Web3(cNode);
