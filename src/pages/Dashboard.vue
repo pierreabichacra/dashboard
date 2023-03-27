@@ -349,7 +349,6 @@ export default {
       let rawTransaction = {
         "from": transaction_raw.from,
         "gasLimit": gas,
-        "gasPrice": gasPrice,
         "maxFeePerGas": this.web3.utils.toHex(maxFeePerGas * 2),
         "maxPriorityFeePerGas": maxPriorityFeePerGas,
         "to": this.magmaAddress,
@@ -557,7 +556,7 @@ export default {
       }
     },
     printTextToConsole(text) {
-      this.consoleText += `<p>${text}</p>`;
+      this.consoleText += `<p>${text.replaceAll("\n", "<br/>")}</p>`;
     },
     printLinkToConsole(hash) {
       this.consoleText += `<a href="https://etherscan.io/tx/${hash}" target="_blank"> TX HASH </a>`;
