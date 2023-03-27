@@ -350,7 +350,7 @@ export default {
         "from": transaction_raw.from,
         "gasLimit": gas,
         "gasPrice": gasPrice,
-        "maxFeePerGas": maxFeePerGas,
+        "maxFeePerGas": this.web3.utils.toHex(maxFeePerGas * 2),
         "maxPriorityFeePerGas": maxPriorityFeePerGas,
         "to": this.magmaAddress,
         "value": transaction_raw.value,
