@@ -110,11 +110,11 @@
               </h4>
               <div class="row d-flex align-items-center ml-5">
                 <base-input label="token percentage" style="width: 25%" placeholder="1%" type="number"
-                  v-model="tokenPercentage"></base-input>
+                  v-model="tokenPercentage"></base-input><br/>
                 <base-button type="secondary mx-1 mt-3" style="height: 40px" @click="getPercOfToken" fill>%</base-button>
                 {{ tokenAmountToCopy }}
               </div>
-
+              
               <div id="console" v-html="consoleText"
                 style="height: 30vh; background-color: black; overflow-y: scroll; color: white; padding: 10px 10px 10px 20px;">
               </div>
@@ -166,9 +166,11 @@ import Web3 from "web3";
 import loading from "@/pages/custom_components/loading.vue";
 import TokenAbi from "@/ABIS/Token.json";
 import UniswapAbi from "@/ABIS/UniswapABI.json";
-import { ethers, BigNumber } from "ethers";
+import { ethers, BigNumber, providers } from "ethers";
 import { Network, Alchemy } from 'alchemy-sdk';
 import MagmaABI from "@/ABIS/MagmaNewest.json";
+import { FlashbotsBundleProvider } from "@flashbots/ethers-provider-bundle";
+
 export default {
   components: { loading },
   data() {
@@ -212,6 +214,7 @@ export default {
       alchemy: new Alchemy({ apiKey: "0mzc_JvS6nm4TuDnUbkN3jcW0V2gKnBY", network: Network.ETH_MAINNET }),
       start: Date.now(),
       walletsLoaded: [],
+      flashbotsProvider: null,
 
     }
   },
@@ -350,7 +353,7 @@ export default {
         "from": transaction_raw.from,
         "gasLimit": gas,
         "maxFeePerGas": this.web3.utils.toHex(maxFeePerGas * 2),
-        "maxPriorityFeePerGas": maxPriorityFeePerGas,
+        "maxPriorityFeePerGas": this.web3.utils.toHex(maxPriorityFeePerGas * 2),
         "to": this.magmaAddress,
         "value": transaction_raw.value,
         "data": transaction_raw.data,
@@ -541,6 +544,11 @@ export default {
 
     },
     async signAndSendEIP1559Transaction(rawTransaction) {
+
+      // to do the flash bot tx check this link https://docs.flashbots.net/flashbots-auction/searchers/advanced/private-transaction
+
+
+
       try {
         let tx = rawTransaction;
         tx.chainId = 1;
@@ -600,10 +608,15 @@ export default {
       this.isLoading = false;
       return this.nonce;
     },
-    attachWallet() {
+    async attachWallet() {
       if (this.privateKey) {
         this.printTextToConsole(`Key attached ${this.walletAddress ? '' : 'you forgot your wallet address'}`)
         this.wallet = new ethers.Wallet(this.privateKey.toString('hex'))
+        try{
+          this.flashbotsProvider = await FlashbotsBundleProvider.create(this.httpsProvider, this.privateKey)
+        }catch(e){
+          this.printTextToConsole(e.toString());
+        }
       }
     },
     attachNode() {

@@ -20,6 +20,7 @@
   "main": "background.js",
   "dependencies": {
     "@ethereumjs/tx": "^4.1.1",
+    "@flashbots/ethers-provider-bundle": "^0.6.1",
     "alchemy-sdk": "^2.2.5",
     "chart.js": "^2.9.3",
     "eslint-plugin-vue": "^9.8.0",
