@@ -6,6 +6,8 @@
         <p class="text-danger">if you dont have a file yet you can set up your wallets file here after submitting all the info for a wallet press + it will add it when your done download the file and you'll be using this file next time </p>
       </div>
       <div class="col-4">
+        <base-input type="password" class="mb-5" placeholder="encryption password" v-model="enc"></base-input>
+
         <base-input type="text" placeholder="name" v-model="name"></base-input>
         <base-input type="text" placeholder="address" v-model="add"></base-input>
         <base-input type="password" placeholder="private" v-model="priv"></base-input>
@@ -31,6 +33,7 @@ export default {
   components: { loading, EasySwapVue },
   data() {
     return {
+      enc: "",
       name:"",
       add: "",
       priv:"",
@@ -44,7 +47,8 @@ export default {
   methods: {
     addWallet(){
       this.preWallets.push({name: this.name, address: this.add, private: this.priv});
-      var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.preWallets));
+      let encrypted = this.CryptoJS.AES.encrypt(JSON.stringify(this.preWallets),"_1_"+this.enc).toString();
+      var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(encrypted);
       var dlAnchorElem = document.getElementById('downloadAnchorElem');
       dlAnchorElem.setAttribute("href",     dataStr     );
       dlAnchorElem.setAttribute("download", "myShit.json");
@@ -54,7 +58,10 @@ export default {
       var fileread = new FileReader();
       fileread.onload = (e) => {
         var content = e.target.result;
-        var intern = JSON.parse(content); // Array of Objects.
+        console.log(content)
+        const decryptedText = this.$CryptoJS.AES.decrypt(content, "_1_"+this.enc).toString(this.$CryptoJS.enc.Utf8)
+        console.log(decryptedText)
+        var intern = JSON.parse(decryptedText); // Array of Objects.
         console.log(intern); // You can index every object
         this.wallets = intern;
         // this.showWallet(this.wallets[0].address)

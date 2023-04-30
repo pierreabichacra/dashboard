@@ -1,7 +1,14 @@
 <template>
   <div>
     <div class="row">
+      <p>
       <input type="file" @change="tryImportWallets" class="form" accept="application/JSON" style="width: 120px; font-size: 10px;" />
+      </p>
+      <div class="row" v-if="wallets.length == 0">
+        <div class="col">
+          <base-input type="password" placeholder="password" v-model="enc"></base-input>
+        </div>
+      </div>
       <div class="col my-2" v-for="w, i in wallets" :key="i">
         <base-button :type="`${selectedWallet == w.address ? 'primary':'secondary'}`" @click="showWallet(w.address)" :title="w.address">{{w.name}}</base-button>
       </div>
@@ -15,6 +22,7 @@ export default {
   components: { MagmaBot },
   data() {
     return {
+      enc: "",
       selectedWallet: null,
       wallets: [],
     }
@@ -28,7 +36,8 @@ export default {
       var fileread = new FileReader();
       fileread.onload = (e) => {
         var content = e.target.result;
-        var intern = JSON.parse(content); // Array of Objects.
+        const decryptedText = this.$CryptoJS.AES.decrypt(content, "_1_"+this.enc).toString(this.$CryptoJS.enc.Utf8)
+        var intern = JSON.parse(decryptedText); // Array of Objects.
         console.log(intern); // You can index every object
         this.wallets = intern;
         this.showWallet(this.wallets[0].address)
