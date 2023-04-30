@@ -8,7 +8,7 @@
               <div class="col-sm-12" :class="isRTL ? 'text-right' : 'text-left'">
                 <h5 class="card-category">Bots</h5>
                 <h2 class="card-title">
-                  Magma Beta
+                  Magma Beta  <base-button type="primary" class="mx-5" @click="getWalletBalance(_address)" fill>{{walletBalance}} ETH</base-button>
                   <span class="text-right">
                     <loading v-if="isLoading" />
                   </span>
@@ -224,6 +224,7 @@ export default {
       privateKey: "",
       walletName: "",
       selectedWallet: -1,
+      walletBalance: 0,
 
       weth_address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
       magmaAddress: "0x4Fc3b4EF49c2f92C8402da818DEe8CD71B666054",
@@ -253,6 +254,13 @@ export default {
     }
   },
   methods: {
+    async getWalletBalance(address){
+      this.isLoading = true;
+      this.walletBalance = await this.httpsProvider.getBalance(address);
+      this.walletBalance /= Math.pow(10, 18);
+      this.walletBalance = this.walletBalance.toFixed(2)
+      this.isLoading = false;
+    },
     saveCustomNode() {
       if (this.customNode) {
         localStorage.setItem("customNode", this.customNode);
@@ -341,13 +349,19 @@ export default {
       var amountToBuyWith = this.web3.utils.toWei(`${this.chosenEthValue}`, 'ether');
       amountToBuyWith = BigNumber.from(amountToBuyWith);
       var tokenAddress = this.targetContract; // ONLYONE contract address
-      let _amountMint = 0;
+      let amountMin;
+      if (this.slippage < 100) {
+        let x = await this.getAmountsOut();
+        // slipp normal
+        amountMin = (x[1]) - (x[1] * this.slippage / 100);
+        this.printTextToConsole(`youre okay to get ${BigNumber.from(amountMin).div(BigNumber.from(10).pow(this.token.decimals))} tokens instead of ${x[1]} tokens sue to slippage ${this.slippage}%`)
+      } else {
+        amountMin = BigNumber.from(0);
+        this.printTextToConsole(`Warning your slippage is 100 you're okay to get 0 tokens`);
+      }
       var routerAbi = MagmaABI;
       var contract = new this.web3.eth.Contract(routerAbi, this.magmaAddress, { from: this.walletAddress });
-      var data = contract.methods.flatLight(
-        _amountMint._hex,
-        [this.weth_address, tokenAddress],
-      );
+      var data = contract.methods.flatLight(amountMin._hex, [this.weth_address, tokenAddress]);
       var count = 0;
       if (this.noncePrepared) {
         count = this.nonce;
@@ -356,8 +370,7 @@ export default {
       }
       var rawTransaction = {
         "from": this.walletAddress,
-        // "gasPrice":this.web3.utils.toHex(this.gwei),
-        // "gasLimit":this.web3.utils.toHex(this.gasLimit),
+        "gasLimit": this.web3.utils.toHex(this.chosenGasLimit),
         "to": this.magmaAddress,
         "value": amountToBuyWith._hex,
         "data": data.encodeABI(),
@@ -413,7 +426,7 @@ export default {
       let rawTransaction = {
         "from": transaction_raw.from,
         "gasLimit": gas,
-        "gasPrice": this.web3.utils.toHex(this.actualChosenGwei),
+        "gasPrice": `0x${this.actualChosenGwei.toString(16)}`,
         "to": this.magmaAddress,
         "value": transaction_raw.value,
         "data": transaction_raw.data,
@@ -528,9 +541,9 @@ export default {
       var amountToBuyWith = this.web3.utils.toWei(`${this.chosenEthValue}`, 'ether');
       amountToBuyWith = BigNumber.from(amountToBuyWith);
       var tokenAddress = this.targetContract; // ONLYONE contract address
-      let x = await this.getAmountsOut();
       let amountMin;
       if (this.slippage < 100) {
+        let x = await this.getAmountsOut();
         // slipp normal
         amountMin = (x[1]) - (x[1] * this.slippage / 100);
         this.printTextToConsole(`youre okay to get ${BigNumber.from(amountMin).div(BigNumber.from(10).pow(this.token.decimals))} tokens instead of ${x[1]} tokens sue to slippage ${this.slippage}%`)
@@ -674,8 +687,10 @@ export default {
         tx.type = 2;
 
         if (this.flashTx) {
-          let signer = this.privateKey;
-          const res = await this.flashbotsProvider.sendPrivateTransaction({tx, signer}, {maxBlockNumber: (await this.httpsProvider.getBlockNumber()) + 1});
+          let signer = this.wallet;
+          let currentBlock = await this.httpsProvider.getBlockNumber();
+
+          const res = await this.flashbotsProvider.sendPrivateTransaction({tx, signer}, {maxBlockNumber: currentBlock + 1});
           const waitRes = await res.wait();
           if (waitRes === FlashbotsTransactionResolution.TransactionIncluded) {
             this.printTextToConsole("Private transaction successfully included on-chain.");
@@ -686,12 +701,12 @@ export default {
           const signedTx = await this.wallet.signTransaction(rawTransaction);
           const txHash = ethers.utils.keccak256(signedTx);
           this.printLinkToConsole(txHash);
-          await this.httpsProvider.sendTransaction(signedTx);
+          let x = await this.httpsProvider.sendTransaction(signedTx);
           this.printTextToConsole("tx mined");
         }
       } catch (e) {
         console.warn(e);
-        this.printTextToConsole(`Tx errored:  ${e.toString()}`);
+        this.printTextToConsole(`Tx erored:  ${e.message}`);
       }
     },
 
@@ -702,24 +717,15 @@ export default {
         tx.chainId = 1;
 
         if (this.flashTx) {
-          let signer = this.privateKey;
-          const res = await this.flashbotsProvider.sendPrivateTransaction({
-            tx,
-            signer,
-          }, {
-            maxBlockNumber: (await this.httpsProvider.getBlockNumber()) + 1, // only allow tx to be included for the next 5 blocks
-          });
-
-          const waitRes = await res.wait();
-          if (waitRes === FlashbotsTransactionResolution.TransactionIncluded) {
-            this.printTextToConsole("Private transaction successfully included on-chain.")
-          } else if (waitRes === FlashbotsTransactionResolution.TransactionDropped) {
-            this.printTextToConsole("Private transaction was not included in a block and has been removed from the system.")
-          }
+          const flashbotsProvider = await ethers.getDefaultProvider("flashbots");
+          const signedTransaction = await wallet.signTransaction(tx);
+          const bundle = [{signedTransaction,}];
+          const results = await flashbotsProvider.sendPrivateTransaction(bundle);
+          console.log("Flashbots results: ", results);
         } else {
           const signedTx = await this.wallet.signTransaction(rawTransaction);
           const txHash = ethers.utils.keccak256(signedTx);
-          this.printLinkToConsole(txHash)
+          this.printLinkToConsole(txHash);
           await this.httpsProvider.sendTransaction(signedTx);
         }
         this.printTextToConsole("tx mined")
@@ -777,9 +783,10 @@ export default {
       if (this.privateKey) {
         try {
           this.printTextToConsole(`Key attached ${this.walletAddress ? '' : 'you forgot your wallet address'}`)
-          this.wallet = new ethers.Wallet(this.privateKey.toString('hex'))
+          this.wallet = new ethers.Wallet(this.privateKey.toString('hex'), this.httpsProvider);
           this.getCurrentNonce();
-          this.flashbotsProvider = await FlashbotsBundleProvider.create(this.httpsProvider, this.privateKey)
+          this.flashbotsProvider = await FlashbotsBundleProvider.create(this.httpsProvider, this.privateKey);
+          this.getWalletBalance(this._address);
         } catch (e) {
           this.printTextToConsole(e.toString());
         }
