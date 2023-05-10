@@ -17,7 +17,10 @@
         <p v-for="p in preWallets" :key="p.address"> {{ p.address }}</p>
       </div>
     </div>
-    <div class="row">
+    <br>
+    <base-button @click="guiRefresh = !guiRefresh">double click to reset all wallets</base-button>
+
+    <div class="row" v-if="guiRefresh">
       <div class="col-4" v-for="w in wallets" :key="w.address">
         <h4 class="mt-5 mb-0">{{ w.name }}</h4>
         <br>
@@ -33,6 +36,7 @@ export default {
   components: { loading, EasySwapVue },
   data() {
     return {
+      guiRefresh: true,
       enc: "",
       name:"",
       add: "",
@@ -54,10 +58,12 @@ export default {
       dlAnchorElem.setAttribute("download", "myShit.json");
     },
     async tryImportWallets(e) {
+      console.log("try import")
       let file_to_read = e.target.files[0];
       var fileread = new FileReader();
       fileread.onload = (e) => {
-        var content = e.target.result;
+        try{
+          var content = e.target.result;
         console.log(content)
         const decryptedText = this.$CryptoJS.AES.decrypt(content, "_1_"+this.enc).toString(this.$CryptoJS.enc.Utf8)
         console.log(decryptedText)
@@ -65,6 +71,14 @@ export default {
         console.log(intern); // You can index every object
         this.wallets = intern;
         // this.showWallet(this.wallets[0].address)
+
+        }catch(e){
+          this.$notify({
+          type: "danger",
+          timeout: 3000,
+          message: "your files are encrypted a password is needed to import them"
+        });
+        }
       };
       fileread.readAsText(file_to_read);
 

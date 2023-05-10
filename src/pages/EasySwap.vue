@@ -22,6 +22,8 @@
       <base-button type="warning" @click="sellTokenAmount" fill>swap</base-button>
       <base-button type="success" @click="max" fill>max</base-button>
       <base-button type="primary" @click="refreshTokensPrice" fill><i class="tim-icons icon-refresh-01"></i></base-button>
+      <base-button type="danger" @click="stopAutoRefresh" v-if="autoRefreshId" fill>S.A.R</base-button>
+      <base-button type="success" @click="startAutoRefresh" v-if="!autoRefreshId && this.token.decimals" fill>S.A.R</base-button>
     </p>
     <div class="row">
       <div class="col">
@@ -29,7 +31,6 @@
           v-model="slippage"></base-input>
         <base-button type="primary" @click="saveProfile" fill>save</base-button>
         <base-button type="danger" @click="deleteProfile" fill>del</base-button>
-
       </div>
       <div class="col">
         <base-input label="GWEI" title="GWEI" placeholder="gwei" type="number" step="5" min="0" max="100"
@@ -59,6 +60,7 @@ export default {
   },
   data() {
     return {
+      autoRefreshId: null,
       txAvailable: "",
       isLoading: false,
       walletBalance: "",
@@ -85,6 +87,16 @@ export default {
     }
   },
   methods: {
+    stopAutoRefresh(){
+      clearInterval(this.autoRefreshId);
+      this.autoRefreshId = null;
+    },
+    startAutoRefresh(){
+      let self = this;
+      this.autoRefreshId = setInterval(() => {
+        self.refreshTokensPrice();
+      }, 3000);
+    },
     saveProfile() {
       let profile = {
         gasLimit: this.gasLimit,
@@ -133,6 +145,7 @@ export default {
       }
     },
     async getTokenBalance() {
+      console.log("getTokenBal")
       try {
         var contract = new this.web3.eth.Contract(TokenAbi, this.targetContract)
         let result = await contract.methods.balanceOf(this._address).call();
@@ -157,7 +170,7 @@ export default {
     },
     async refreshTokensPrice() {
       try {
-
+        console.log("refresh tkn price")
         var contract = new this.web3.eth.Contract(UniswapAbi, this.uniswapRouterAddress, { from: this.walletAddress });
         let amountToSell = BigNumber.from(this.token_number_to_sell);
         console.log(this.token_number_to_sell)
@@ -171,7 +184,7 @@ export default {
         this.token.warn = null;
       } catch (e) {
         this.token.warn = "Balance 0"
-        console.error(e)
+        console.warn(e)
         return 0;
       }
     },
