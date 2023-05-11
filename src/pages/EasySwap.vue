@@ -1,6 +1,7 @@
 <template>
   <div class="easyswapcontainer">
-    <small style="cursor: pointer;" @click="getWalletBalance(_address)" v-if="walletBalance">{{ walletBalance }} eth 
+    <small style="cursor: pointer;" @click="getWalletBalance(_address)" v-if="walletBalance">{{ walletBalance }} eth
+      <i class="tim-icons icon-chart-bar-32 mx-3 my-2 pb-1" style="cursor: pointer;" v-if="token.decimals" @click="showChart"></i>
       <a :href="txAvailable" v-if="txAvailable" target="_blank">TX</a>
       <loading v-if="isLoading" />
     </small>
@@ -24,6 +25,7 @@
       <base-button type="primary" @click="refreshTokensPrice" fill><i class="tim-icons icon-refresh-01"></i></base-button>
       <base-button type="danger" @click="stopAutoRefresh" v-if="autoRefreshId" fill>S.A.R</base-button>
       <base-button type="success" @click="startAutoRefresh" v-if="!autoRefreshId && this.token.decimals" fill>S.A.R</base-button>
+      <base-button type="primary" @click="approveToken" fill>approve</base-button>
     </p>
     <div class="row">
       <div class="col">
@@ -87,11 +89,14 @@ export default {
     }
   },
   methods: {
-    stopAutoRefresh(){
+    showChart(){
+      this.$parent.openChart(this.targetContract)
+    },
+    stopAutoRefresh() {
       clearInterval(this.autoRefreshId);
       this.autoRefreshId = null;
     },
-    startAutoRefresh(){
+    startAutoRefresh() {
       let self = this;
       this.autoRefreshId = setInterval(() => {
         self.refreshTokensPrice();
@@ -188,6 +193,35 @@ export default {
         return 0;
       }
     },
+    async approveToken() {
+      var contract = new this.web3.eth.Contract(TokenAbi, this.targetContract, { from: this._address });
+      let maxAmountToApprove = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+      var data = contract.methods.approve(
+        this.uniswapRouterAddress,
+        maxAmountToApprove
+      );
+      console.log(data)
+      var count = await this.getCurrentNonce();
+      var rawTransaction = {
+        "from": this._address,
+        "gasPrice": BigNumber.from(this.gwei).mul(BigNumber.from(10).pow(9))._hex,
+        "gasLimit": BigNumber.from(this.gasLimit)._hex,
+        "to": this.targetContract,
+        "data": data.encodeABI(),
+        "nonce": this.web3.utils.toHex(count)
+      };
+      try {
+        const signedTx = await this.wallet.signTransaction(rawTransaction);
+        this.isLoading = true;
+        let res = await this.httpsProvider.sendTransaction(signedTx);
+        this.txAvailable = `https://etherscan.io/tx/${res.hash}`
+        console.log(res)
+        this.isLoading = false;
+      } catch (e) {
+        console.error(e)
+      }
+
+    },
     async getCaInfo(ca) {
       try {
         let contract = new this.web3.eth.Contract(TokenAbi, ca);
@@ -216,8 +250,12 @@ export default {
       let token_number_to_sell_BigNum = BigNumber.from(this.token_number_to_sell);
       let eth_to_receive = (this.currentTokenBalanceInEth)
       if (this.slippage < 100) {
-        eth_to_receive = eth_to_receive - (eth_to_receive * this.slippage / 100);
+        eth_to_receive = eth_to_receive - (eth_to_receive * this.slippage) / 100;
+      }else{
+        eth_to_receive = 0;
       }
+      eth_to_receive = eth_to_receive.toFixed(6)
+
       console.log(eth_to_receive)
       eth_to_receive = ethers.utils.parseEther(eth_to_receive.toString())
       console.log(eth_to_receive)
