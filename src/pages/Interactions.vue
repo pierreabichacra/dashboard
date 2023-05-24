@@ -1,16 +1,5 @@
 <template>
   <div>
-    <div class="row">
-      <div class="col" v-if="chartToken">
-        <base-button @click="refreshChart" ><i class="tim-icons icon-refresh-01"></i></base-button>
-        <base-button @click="chartToken = null" ><i class="tim-icons icon-simple-remove"></i></base-button>
-        <div class="text-center" style="overflow-y: scroll; height: 810px;" v-if="chartRefresh">
-          <iframe :src="`https://dexscreener.com/ethereum/${chartToken}`"
-            frameborder="0" width="100%" height="800px"></iframe>
-        </div>
-
-      </div>
-    </div>
     <input type="file" @change="tryImportWallets" class="form" accept="application/JSON"
       style="width: 120px; font-size: 10px;" v-if="wallets.length == 0" />
     <div class="row mt-5" v-if="wallets.length == 0">
@@ -42,18 +31,18 @@
       <div class="col-4" v-for="w in wallets" :key="w.address">
         <h4 class="mt-5 mb-0">{{ w.name }}</h4>
         <br>
-        <EasySwapVue :_address="w.address" :_private="w.private" />
+        <WalletInteract :_address="w.address" :_private="w.private" />
       </div>
     </div>
   </div>
 </template>
 <script>
 import loading from "@/pages/custom_components/loading.vue";
-import EasySwapVue from './EasySwap.vue';
 import Web3 from "web3";
+import WalletInteract from "./WalletInteract.vue";
 
 export default {
-  components: { loading, EasySwapVue },
+  components: { loading, WalletInteract},
   data() {
     return {
       chartToken: "",

@@ -4,6 +4,7 @@
       <template slot="links">
         <sidebar-link to="/dashboard" :name="$t('Magma Beta')" icon="tim-icons icon-chart-pie-36"/>
         <sidebar-link to="/belongings" :name="$t('Multi Jeet')" icon="tim-icons icon-wallet-43"/>
+        <sidebar-link to="/interactions" :name="$t('Interact')" icon="tim-icons icon-delivery-fast"/>
         <!-- <sidebar-link to="/icons" :name="$t('sidebar.icons')" icon="tim-icons icon-atom"/>
         <sidebar-link to="/maps" :name="$t('sidebar.maps')" icon="tim-icons icon-pin"/>
         <sidebar-link to="/notifications" :name="$t('sidebar.notifications')" icon="tim-icons icon-bell-55"/>
