@@ -6,6 +6,7 @@ import NotFound from "@/pages/NotFoundPage.vue";
 const Dashboard = () => import(/* webpackChunkName: "dashboard" */"@/pages/Dashboard.vue");
 const Profile = () => import(/* webpackChunkName: "common" */ "@/pages/Profile.vue");
 const Belongings = () => import(/* webpackChunkName: "common" */ "@/pages/Belongings.vue");
+const EthUniswapV3 = () => import(/* webpackChunkName: "common" */ "@/pages/EthUniswapV3.vue");
 const Interactions = () => import(/* webpackChunkName: "common" */ "@/pages/Interactions.vue");
 const Notifications = () => import(/* webpackChunkName: "common" */"@/pages/Notifications.vue");
 const Icons = () => import(/* webpackChunkName: "common" */ "@/pages/Icons.vue");
@@ -28,6 +29,11 @@ const routes = [
         path: "belongings",
         name: "Belongings",
         component: Belongings
+      },
+      {
+        path: "uniswapv3",
+        name: "EthUniswapV3",
+        component: EthUniswapV3
       },
       {
         path: "interactions",
