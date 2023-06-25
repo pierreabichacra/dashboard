@@ -7,20 +7,23 @@
     <p>
       <button v-if="token.decimals" style="background-color: red; padding: 5px; cursor: pointer;"
         @click="getQuotes">R</button>
+        <button class="btn btn-warning" @click="v3Fee = '3000'">.3%</button>
+        <button class="btn btn-warning" @click="v3Fee = '10000'">1%</button>
       <base-input :label="token.name == '' ? '' : token.name + '/' + token.symbol + ': ' + token.decimals"
         placeholder="contract address" @click="pasteContract" v-model="targetContract"></base-input>
     </p>
     <p>
-      {{ eth_amount_to_send }}
+      {{ eth_amount_to_send }} ETH
       <base-input placeholder="Eth amount to send" type="number" step="0.01" v-model="eth_amount_to_send"
         @change="getQuotes"></base-input>
     </p>
     <p>
-      <small>{{ this.real_token_amount_to_receive - (this.real_token_amount_to_receive * (this.slippage / 100)) }}</small>
+      <small>{{ this.real_token_amount_to_receive - (this.real_token_amount_to_receive * (this.slippage / 100)) }} {{ token.symbol }}</small>
       <base-input type="number" placeholder="token amount to receive" v-model="token_amount_to_receive"></base-input>
     </p>
     <p>
       <base-button type="warning" @click="executeBuy" fill>Buy</base-button>
+      <base-button type="info" @click="approveToken" fill>Approve</base-button>
       <base-button type="danger" @click="cancelTx" title="canceling tx always takes 1 gwei higher than set gwei"
         fill>Cancel TX</base-button>
     </p>
@@ -94,16 +97,18 @@ export default {
       nonce: 0,
       wallet: null,
       httpsProvider: null,
+      v3Fee: '3000',
     }
   },
   computed: {},
   methods: {
     async getQuotes() {
+      let start = Date.now();
       this.isLoading = true;
       const provider = this.httpsProvider;
       const tokenIn = this.weth_address;
       const tokenOut = this.targetContract;
-      const fee = '3000'
+      const fee = this.v3Fee;
       const amountIn = ethers.utils.parseEther(this.eth_amount_to_send);
       const sqrtPriceLimitX96 = '0';
       console.log(QuoterAbi)
@@ -149,6 +154,8 @@ export default {
       console.log('init ticks crossed', output.initializedTicksCrossed.toString());
       console.log('gasEstimate', output.gasEstimate.toString());
       this.isLoading = false;
+      let end = Date.now();
+      console.log(`get quotes too ${end - start}ms to execute`)
     },
     async executeBuy() {
 
@@ -182,7 +189,7 @@ export default {
       const swapTransaction = routerContract.methods.exactInputSingle({
         tokenIn: path[0],
         tokenOut: path[1],
-        fee: '3000', // Use the desired fee (3000 for 0.3% fee)
+        fee: this.v3Fee, // Use the desired fee (3000 for 0.3% fee)
         recipient: to,
         deadline: deadline,
         amountIn: amountIn,
@@ -319,6 +326,7 @@ export default {
     },
     async getCaInfo(ca) {
       try {
+        let start =  Date.now();
         let contract = new this.web3.eth.Contract(TokenAbi, ca);
         let name = await contract.methods.name().call();
         let symbol = await contract.methods.symbol().call();
@@ -330,6 +338,8 @@ export default {
           decimals: decimals,
           totalSupply: totalSupply / Math.pow(10, decimals)
         }
+        let end =  Date.now();
+        console.log(`get ca info took ${end - start}ms to execute`)
       } catch (e) {
         console.warn(e.toString())
       }
@@ -374,12 +384,43 @@ export default {
       this.walletBalance = this.walletBalance.toFixed(2)
       this.isLoading = false;
     },
+    async approveToken() {
+      this.isLoading = true;
+      var contract = new this.web3.eth.Contract(TokenAbi, this.targetContract, { from: this._address });
+      let maxAmountToApprove = "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+      var data = contract.methods.approve(
+        this.uniswapRouterAddress,
+        maxAmountToApprove
+      );
+      var count = await this.getCurrentNonce();
+      var rawTransaction = {
+        "from": this._address,
+        "gasPrice": BigNumber.from(this.gwei).mul(BigNumber.from(10).pow(9))._hex,
+        "gasLimit": BigNumber.from(this.gasLimit)._hex,
+        "to": this.targetContract,
+        "data": data.encodeABI(),
+        "nonce": this.web3.utils.toHex(count)
+      };
+      try {
+        const signedTx = await this.wallet.signTransaction(rawTransaction);
+        let res = await this.httpsProvider.sendTransaction(signedTx);
+        this.txAvailable = `https://etherscan.io/tx/${res.hash}`
+        console.log(res)
+        this.isLoading = false;
+      } catch (e) {
+        console.error(e)
+      }
+
+    },
   },
   mounted() {
     let cNode = "https://eth-mainnet.g.alchemy.com/v2/0mzc_JvS6nm4TuDnUbkN3jcW0V2gKnBY";
-    this.web3 = new Web3(cNode);
-    this.httpsProvider = new ethers.providers.JsonRpcProvider(cNode);
+    let quickNode = "https://proportionate-autumn-tab.discover.quiknode.pro/20a9f7f36c3453d70819435fb628f3aeaf576079/";
+    let publicNode = "https://eth.llamarpc.com";
+    this.web3 = new Web3(publicNode);
+    this.httpsProvider = new ethers.providers.JsonRpcProvider(publicNode);
     this.wallet = new ethers.Wallet(this._private.toString('hex'), this.httpsProvider);
+    this.info(`using ${publicNode}`)
     this.getWalletBalance(this._address);
     this.tryImportProfile();
   },

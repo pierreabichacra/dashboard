@@ -32,9 +32,7 @@
               </base-input>
             </div>
             <div class="col-5 col-sm-3">
-              <base-input label="Private Key" placeholder="Your private key" type="password" v-model="privateKey"
-                @change="attachWallet">
-              </base-input>
+              
             </div>
             <div class="col-2 col-sm-6">
               <div class="row">
@@ -126,7 +124,7 @@
         </card>
         <div class="row">
           <div class="col">
-            <card type="info">
+            <!-- <card type="info">
               info about wallet <small class="text-warning">file extension should be in json</small>
               <p>
                 the file to import should look like this <span class="text-success"> [{"name": "wallet 1", "address":
@@ -141,7 +139,7 @@
                   ]
                 </span>
               </p>
-            </card>
+            </card> -->
           </div>
           <div class="col">
             <card type="info">
@@ -214,8 +212,9 @@ export default {
       currentTokenBalanceInEth: 0,
       actualChosenGwei: 30 * Math.pow(10, 9),
 
-      // defaultNode: "https://eth.llamarpc.com",
-      defaultNode: "https://ethereum.publicnode.com",
+      defaultNode: "https://eth.llamarpc.com",
+      // defaultNode: "https://ethereum.publicnode.com",
+      // defaultNode: "https://proportionate-autumn-tab.discover.quiknode.pro/20a9f7f36c3453d70819435fb628f3aeaf576079/",
       httpsProvider: null,
       customNode: "",
       web3: null,

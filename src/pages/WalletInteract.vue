@@ -5,12 +5,8 @@
       <loading v-if="isLoading" />
     </small>
     <p>
-      <base-input
-        :label="this.targetContract == '' ? '':this.targetContract"
-        placeholder="contract address"
-        @click="pasteContract"
-        v-model="targetContract"
-        ></base-input>
+      <base-input :label="this.targetContract == '' ? '' : this.targetContract" placeholder="contract address"
+        @click="pasteContract" v-model="targetContract"></base-input>
     </p>
     <p>
       {{ eth_amount_to_send }}
@@ -22,7 +18,8 @@
     </p>
     <p>
       <base-button type="warning" @click="sendTx" fill>Send TX</base-button>
-      <base-button type="danger" @click="cancelTx" title="canceling tx always takes 1 gwei higher than set gwei" fill>Cancel TX</base-button>
+      <base-button type="danger" @click="cancelTx" title="canceling tx always takes 1 gwei higher than set gwei"
+        fill>Cancel TX</base-button>
     </p>
     <div class="row">
       <div class="col">
@@ -81,9 +78,9 @@ export default {
       httpsProvider: null,
     }
   },
-  computed: {  },
+  computed: {},
   methods: {
-    async sendTx(){
+    async sendTx() {
       this.isLoading = true;
       let count = await this.getCurrentNonce();
       var amountToBuyWith = this.web3.utils.toWei(`${this.eth_amount_to_send}`, 'ether');
@@ -101,11 +98,11 @@ export default {
       console.log(rawTransaction)
       let res = await this.signAndSendType0Transaction(rawTransaction);
       console.log(res);
-      this.txAvailable = "https://etherscan.io/tx/"+res.hash;
+      this.txAvailable = "https://etherscan.io/tx/" + res.hash;
       this.isLoading = false;
 
     },
-    async cancelTx(){
+    async cancelTx() {
       let count = await this.getCurrentNonce();
       var amountToBuyWith = this.web3.utils.toWei(`${this.eth_amount_to_send}`, 'ether');
       amountToBuyWith = BigNumber.from(amountToBuyWith);
@@ -192,14 +189,40 @@ export default {
       this.walletBalance = this.walletBalance.toFixed(2)
       this.isLoading = false;
     },
+    // async test() {
+    //   const contractAddress = '0xBD49Aa5Cd48d346ac777deC05a5D413d14297A3b';
+    //   this.httpsProvider.getCode(contractAddress).then((bytecode) => {
+
+    //     const functionSignatures = [];
+
+    //     let i = 0;
+    //     while (i < bytecode.length - 8) {
+    //       const signature = bytecode.slice(i + 10, i + 10 + 8);
+    //       console.error(signature)
+    //       try {
+    //         const decodedSignature = ethers.hexlify(
+    //           ethers.utils.defaultAbiCoder.decode(['bytes4'], signature)
+    //         );
+    //         functionSignatures.push(decodedSignature);
+    //       } catch (error) {
+    //         // Ignore errors and continue to the next iteration
+    //         console.warn(error)
+    //       }
+    //       i += 2;
+    //     }
+    //     return functionSignatures;
+    //   });
+    // },
   },
   mounted() {
+    let quickNode = "https://proportionate-autumn-tab.discover.quiknode.pro/20a9f7f36c3453d70819435fb628f3aeaf576079/";
     let cNode = "https://eth-mainnet.g.alchemy.com/v2/0mzc_JvS6nm4TuDnUbkN3jcW0V2gKnBY";
-    this.web3 = new Web3(cNode);
-    this.httpsProvider = new ethers.providers.JsonRpcProvider(cNode);
+    this.web3 = new Web3(quickNode);
+    this.httpsProvider = new ethers.providers.JsonRpcProvider(quickNode);
     this.wallet = new ethers.Wallet(this._private.toString('hex'), this.httpsProvider);
     this.getWalletBalance(this._address);
     this.tryImportProfile();
+    // this.test();
   },
   beforeDestroy() {
 

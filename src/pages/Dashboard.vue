@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="row">
-      <p>
+      <p v-if="wallets.length == 0">
       <input type="file" @change="tryImportWallets" class="form" accept="application/JSON" style="width: 120px; font-size: 10px;" />
       </p>
       <div class="row" v-if="wallets.length == 0">

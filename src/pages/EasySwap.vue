@@ -341,9 +341,11 @@ export default {
     },
   },
   mounted() {
+    let quickNode = "https://proportionate-autumn-tab.discover.quiknode.pro/20a9f7f36c3453d70819435fb628f3aeaf576079/";
     let cNode = "https://eth-mainnet.g.alchemy.com/v2/0mzc_JvS6nm4TuDnUbkN3jcW0V2gKnBY";
-    this.web3 = new Web3(cNode);
-    this.httpsProvider = new ethers.providers.JsonRpcProvider(cNode);
+    let publicNode = "https://eth.llamarpc.com";
+    this.web3 = new Web3(publicNode);
+    this.httpsProvider = new ethers.providers.JsonRpcProvider(publicNode);
     this.wallet = new ethers.Wallet(this._private.toString('hex'), this.httpsProvider);
     this.getWalletBalance(this._address);
     this.tryImportProfile();
