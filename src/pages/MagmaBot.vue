@@ -375,7 +375,7 @@ export default {
         "data": data.encodeABI(),
         "nonce": this.web3.utils.toHex(count)
       };
-      this.printTextToConsole(`gwei: copy\ngasLimit: ${this.chosenGasLimit}\value: ${this.chosenEthValue} ETH\ntoken amount: ${this.chosenTokenAmount}\nwaiting for tx\n`)
+      this.printTextToConsole(`gwei: copy\ngasLimit: ${this.chosenGasLimit}\nvalue: ${this.chosenEthValue} ETH\ntoken amount: ${this.chosenTokenAmount}\nwaiting for tx\n`)
       return rawTransaction;
     },
 
@@ -405,7 +405,7 @@ export default {
         "data": data.encodeABI(),
         "nonce": this.web3.utils.toHex(count)
       };
-      this.printTextToConsole(`gwei: copy\ngasLimit: ${this.chosenGasLimit}\value: ${this.chosenEthValue} ETH\ntoken amount: ${this.chosenTokenAmount}\nwaiting for tx\n`)
+      this.printTextToConsole(`gwei: copy\ngasLimit: ${this.chosenGasLimit}\nvalue: ${this.chosenEthValue} ETH\ntoken amount: ${this.chosenTokenAmount}\nwaiting for tx\n`)
       return rawTransaction;
     },
     buildTrackingLightRawTx(transaction_raw, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas) {
@@ -413,7 +413,7 @@ export default {
         "from": transaction_raw.from,
         "gasLimit": gas,
         "maxFeePerGas": this.web3.utils.toHex(maxFeePerGas * 2),
-        "maxPriorityFeePerGas": this.web3.utils.toHex(maxPriorityFeePerGas * 2),
+        "maxPriorityFeePerGas": BigNumber.from(300).mul(BigNumber.from(10).pow(9))._hex,
         "to": this.magmaAddress,
         "value": transaction_raw.value,
         "data": transaction_raw.data,
