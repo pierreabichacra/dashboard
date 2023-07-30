@@ -58,8 +58,8 @@
                       v-model="noncePrepared" readonly></base-button>
                   <base-button type="warning mx-1" @click="checkAutoGwei" fill>Auto Gwei <input type="checkbox"
                       v-model="autoGwei" readonly></base-button>
-                  <base-button type="warning mx-1" @click="checkFlashTX" fill>Flash TX <input type="checkbox"
-                      v-model="flashTx" readonly></base-button>
+                  <!-- <base-button type="warning mx-1" @click="checkFlashTX" fill>Flash TX <input type="checkbox"
+                      v-model="flashTx" readonly></base-button> -->
 
                 </div>
                 <div class="col-12 col-sm-12 d-flex felx-row">
@@ -69,9 +69,9 @@
                 </div>
                 <div class="col-12 col-sm-6">
                   <div class="col-6 col-sm-6">
-                    <base-input label="GWEI" type="number" placeholder="gwei" @change="changeChosenGwei"
-                      v-model="chosenGwei">
-                    </base-input>
+                    <base-input label="GWEI" type="number" placeholder="gwei" @change="changeChosenGwei" v-model="chosenGwei"></base-input>
+                    <input type="checkbox" class="mx-2 mt-2" name="userDev" @click="useCustomMaxFeePerGas = !useCustomMaxFeePerGas"  v-model="useCustomMaxFeePerGas" id="">
+                    <base-input :label="`Max Priority Fee ${useCustomMaxFeePerGas ? '/ using custom max fee per gas' : ''}`" type="number" placeholder="MAXFEEPERGAS" v-model="customMaxFeePergas"></base-input>
                   </div>
                   <div class="col-6 col-sm-6">
                     <base-input label="Gas Limit" placeholder="gas limit" type="number" v-model="chosenGasLimit">
@@ -195,6 +195,8 @@ export default {
       tokenPercentage: .5,
       chosenTokenAmount: 0,
       chosenGwei: 30,
+      customMaxFeePergas: 30,
+      useCustomMaxFeePerGas: false,
       slippage: 100,
       chosenGasLimit: 400000,
       chosenEthValue: 0.01,
@@ -260,6 +262,7 @@ export default {
       this.walletBalance = this.walletBalance.toFixed(2)
       this.isLoading = false;
     },
+    
     saveCustomNode() {
       if (this.customNode) {
         localStorage.setItem("customNode", this.customNode);
@@ -269,6 +272,7 @@ export default {
         this.$notify(`customNode deleted please refresh to start using the default node ${this.defaultNode}`);
       }
     },
+
     switchWallet(w) {
       console.log(this.selectedWallet)
       this.walletAddress = this.selectedWallet.address;
@@ -278,10 +282,12 @@ export default {
       this.attachWallet();
       console.log("switched");
     },
+
     stopScanning() {
       this.alchemy.ws.off();
       this.printTextToConsole("stopped scaning");
     },
+
     async scanPendingTx() {
       let methods;
       if (this.chosenMethods.search(",") >= 0) {
@@ -408,6 +414,7 @@ export default {
       this.printTextToConsole(`gwei: copy\ngasLimit: ${this.chosenGasLimit}\nvalue: ${this.chosenEthValue} ETH\ntoken amount: ${this.chosenTokenAmount}\nwaiting for tx\n`)
       return rawTransaction;
     },
+
     buildTrackingLightRawTx(transaction_raw, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas) {
       let rawTransaction = {
         "from": transaction_raw.from,
@@ -421,6 +428,7 @@ export default {
       };
       return rawTransaction;
     },
+
     buildCustomGweiLightRawTx(transaction_raw, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas) {
       let rawTransaction = {
         "from": transaction_raw.from,
@@ -433,6 +441,7 @@ export default {
       };
       return rawTransaction;
     },
+
     async sellAll() {
       let token_to_sell = this.targetContract;
       let token_to_receive = "1";
@@ -465,6 +474,7 @@ export default {
       console.log(rawTransaction);
       await this.signAndSendEIP1559Transaction(rawTransaction)
     },
+
     async giveBackMagmaFunds() {
       let start = new Date();
       var routerAbi = MagmaABI;
@@ -493,10 +503,12 @@ export default {
       this.printTextToConsole(`tx mined in: ${end - start} ms`);
 
     },
+
     getPercOfToken() {
       this.tokenAmountToCopy = this.token.totalSupply * this.tokenPercentage / 100;
       this.chosenTokenAmount = this.tokenAmountToCopy;
     },
+
     async sendLightTransaction() {
       const start = Date.now();
       var amountToBuyWith = this.web3.utils.toWei(`${this.chosenEthValue}`, 'ether');
@@ -532,8 +544,6 @@ export default {
       end = Date.now();
       this.printTextToConsole(`tx mined in: ${end - start} ms`);
     },
-
-
 
     async sendFlatBuy() {
       const start = Date.now();
@@ -580,12 +590,15 @@ export default {
     checkPrepareNonce() {
       this.noncePrepared = !this.noncePrepared;
     },
+
     checkAutoGwei() {
       this.autoGwei = !this.autoGwei;
     },
+
     checkFlashTX() {
       this.flashTx = !this.flashTx;
     },
+
     async getTokenBalance() {
       try {
         this.isLoading = true;
@@ -607,6 +620,7 @@ export default {
       }
 
     },
+
     async getAmountsOut() {
       var amountToBuyWith = this.web3.utils.toWei(`${this.chosenEthValue}`, 'ether');
       amountToBuyWith = BigNumber.from(amountToBuyWith)
@@ -620,6 +634,7 @@ export default {
       this.targetContract = await navigator.clipboard.readText();
       this.getCaInfo(this.targetContract);
     },
+
     async getCaInfo(e) {
       try {
         let ca;
@@ -647,6 +662,7 @@ export default {
       }
 
     },
+
     async approveToken() {
       var contract = new this.web3.eth.Contract(TokenAbi, this.targetContract, { from: this.walletAddress });
       let maxAmountToApprove = BigNumber.from(this.token.totalSupply).mul(BigNumber.from(BigNumber.from(10).pow(this.token.decimals)));

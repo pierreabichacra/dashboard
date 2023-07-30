@@ -137,6 +137,7 @@ export default {
         this.printTextToConsole("tx mined")
       } catch (e) {
         console.warn(e);
+        this.$notify(e.toString())
         this.printTextToConsole(`Tx errored:  ${e.toString()}`);
       }
     },
@@ -169,6 +170,8 @@ export default {
       } catch (e) {
         this.token.warn = "you dont have shit jeet"
         console.error(e)
+        this.$notify(e.toString())
+
         return 0;
       }
 
@@ -190,6 +193,7 @@ export default {
       } catch (e) {
         this.token.warn = "Balance 0"
         console.warn(e)
+        this.$notify(e.toString())
         return 0;
       }
     },
@@ -219,6 +223,7 @@ export default {
         this.isLoading = false;
       } catch (e) {
         console.error(e)
+        this.$notify(e.toString())
       }
 
     },
@@ -237,6 +242,7 @@ export default {
         }
       } catch (e) {
         console.warn(e.toString())
+        this.$notify(e.toString())
       }
     },
     async pasteContract() {
@@ -290,6 +296,8 @@ export default {
         this.isLoading = false;
       } catch (e) {
         console.error(e)
+        this.$notify(e.toString())
+
       }
     },
     async getCurrentNonce() {

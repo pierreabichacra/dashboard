@@ -42,7 +42,7 @@
       <div class="col-4" v-for="w in wallets" :key="w.address">
         <h4 class="mt-5 mb-0">{{ w.name }}</h4>
         <br>
-        <EasySwapVue :_address="w.address" :_private="w.private" />
+        <EasySwapVue :_address="w.address" :_private="w.private"/>
       </div>
     </div>
   </div>
@@ -111,6 +111,10 @@ export default {
           const decryptedText = this.$CryptoJS.AES.decrypt(content, "_1_" + this.enc).toString(this.$CryptoJS.enc.Utf8)
           var intern = JSON.parse(decryptedText); // Array of Objects.
           this.wallets = intern;
+          for (let i = 0; i < this.wallets.length; i++) {
+            this.refresh[i] = true;
+            
+          }
         } catch (e) {
           this.$notify({
             type: "danger",
