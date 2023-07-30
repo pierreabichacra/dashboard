@@ -2,11 +2,11 @@
   <div>
     <div class="row">
       <div class="col" v-if="chartToken">
-        <base-button @click="refreshChart" ><i class="tim-icons icon-refresh-01"></i></base-button>
-        <base-button @click="chartToken = null" ><i class="tim-icons icon-simple-remove"></i></base-button>
+        <base-button @click="refreshChart"><i class="tim-icons icon-refresh-01"></i></base-button>
+        <base-button @click="chartToken = null"><i class="tim-icons icon-simple-remove"></i></base-button>
         <div class="text-center" style="overflow-y: scroll; height: 810px;" v-if="chartRefresh">
-          <iframe :src="`https://dexscreener.com/ethereum/${chartToken}`"
-            frameborder="0" width="100%" height="800px"></iframe>
+          <iframe :src="`https://dexscreener.com/ethereum/${chartToken}`" frameborder="0" width="100%"
+            height="800px"></iframe>
         </div>
 
       </div>
@@ -35,14 +35,29 @@
     <div v-if="wallets.length > 0">
       <base-button @click="guiRefresh = !guiRefresh">double click to reset all wallets</base-button>
       <base-button @click="refreshGas">{{ currentGwei }}</base-button>
+      <div class="row">
+        <div class="col">
+          <base-input type="text" placeholder="token address" v-model="token_address"
+            style="width: 30%; float: right;"></base-input>
+        </div>
+        <div class="col">
+          <base-button @click="checkWalletsContainingTokenAddress">
+          <i class="tim-icons icon-zoom-split"></i>
+        </base-button>
+          <base-button @click="refreshWallets">
+          <i class="tim-icons icon-refresh-02"></i>
+        </base-button>
 
+        </div>
+      </div>
     </div>
 
     <div class="row" v-if="guiRefresh">
       <div class="col-4" v-for="w in wallets" :key="w.address">
-        <h4 class="mt-5 mb-0">{{ w.name }}</h4>
+        <h5 class="mt-5 mb-0" v-if="token_owners.includes(w.address)"><a target="_blank" :href="`https://etherscan.io/address/${w.address}`">{{ w.name }}</a>
+        </h5>
         <br>
-        <EasySwapVue :_address="w.address" :_private="w.private"/>
+        <EasySwapVue :_address="w.address" :_private="w.private" v-if="token_owners.includes(w.address)" :currentToken="token_owners.includes(w.address) ? token_address : null"/>
       </div>
     </div>
   </div>
@@ -67,24 +82,64 @@ export default {
       currentGwei: 0,
       web3: null,
       chartRefresh: true,
+      token_address: "",
+      token_owners: [],
     }
   },
   computed: {
 
   },
   methods: {
-    openChart(address){
+    openChart(address) {
       this.chartToken = address;
     },
-    closeChart(){
+    closeChart() {
       this.chartToken = null
     },
-    refreshChart(){
+
+    refreshChart() {
       this.chartRefresh = !this.chartRefresh;
       setTimeout(() => {
         this.chartRefresh = !this.chartRefresh;
       }, 100);
-      
+
+    },
+    refreshWallets(){
+      this.token_owners = this.wallets.map(x=> {return x.address})
+      console.log(this.token_owners)
+    },
+    async checkWalletsContainingTokenAddress() {
+      let minABI = [
+        // balanceOf
+        {
+          "constant": true,
+          "inputs": [{ "name": "_owner", "type": "address" }],
+          "name": "balanceOf",
+          "outputs": [{ "name": "balance", "type": "uint256" }],
+          "type": "function"
+        },
+        // decimals
+        {
+          "constant": true,
+          "inputs": [],
+          "name": "decimals",
+          "outputs": [{ "name": "", "type": "uint8" }],
+          "type": "function"
+        }
+      ];
+      let contract_address = this.token_address;
+      let adresses_to_check = this.wallets.map(x => { return x.address });
+      console.log(adresses_to_check)
+      let contract = new this.web3.eth.Contract(minABI, contract_address);
+      let owners = [];
+      for (let i = 0; i < adresses_to_check.length; i++) {
+        let addy = adresses_to_check[i];
+        let balance = await contract.methods.balanceOf(addy).call();
+        if (balance > 0) {
+          owners.push(addy);
+        }
+      }
+      this.token_owners = owners;
     },
     async refreshGas() {
       let cNode = "https://eth-mainnet.g.alchemy.com/v2/0mzc_JvS6nm4TuDnUbkN3jcW0V2gKnBY";
@@ -111,11 +166,9 @@ export default {
           const decryptedText = this.$CryptoJS.AES.decrypt(content, "_1_" + this.enc).toString(this.$CryptoJS.enc.Utf8)
           var intern = JSON.parse(decryptedText); // Array of Objects.
           this.wallets = intern;
-          for (let i = 0; i < this.wallets.length; i++) {
-            this.refresh[i] = true;
-            
-          }
+          this.refreshWallets();
         } catch (e) {
+          console.error(e)
           this.$notify({
             type: "danger",
             timeout: 1500,

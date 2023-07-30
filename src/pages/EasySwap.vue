@@ -1,7 +1,8 @@
 <template>
   <div class="easyswapcontainer">
     <small style="cursor: pointer;" @click="getWalletBalance(_address)" v-if="walletBalance">{{ walletBalance }} eth
-      <i class="tim-icons icon-chart-bar-32 mx-3 my-2 pb-1" style="cursor: pointer;" v-if="token.decimals" @click="showChart"></i>
+      <i class="tim-icons icon-chart-bar-32 mx-3 my-2 pb-1" style="cursor: pointer;" v-if="token.decimals"
+        @click="showChart"></i>
       <a :href="txAvailable" v-if="txAvailable" target="_blank">TX</a>
       <loading v-if="isLoading" />
     </small>
@@ -24,7 +25,8 @@
       <base-button type="success" @click="max" fill>max</base-button>
       <base-button type="primary" @click="refreshTokensPrice" fill><i class="tim-icons icon-refresh-01"></i></base-button>
       <base-button type="danger" @click="stopAutoRefresh" v-if="autoRefreshId" fill>S.A.R</base-button>
-      <base-button type="success" @click="startAutoRefresh" v-if="!autoRefreshId && this.token.decimals" fill>S.A.R</base-button>
+      <base-button type="success" @click="startAutoRefresh" v-if="!autoRefreshId && this.token.decimals"
+        fill>S.A.R</base-button>
       <base-button type="primary" @click="approveToken" fill>approve</base-button>
     </p>
     <div class="row">
@@ -59,6 +61,9 @@ export default {
     _private: {
       type: String,
     },
+    currentToken: {
+      type: String,
+    },
   },
   data() {
     return {
@@ -89,7 +94,7 @@ export default {
     }
   },
   methods: {
-    showChart(){
+    showChart() {
       this.$parent.openChart(this.targetContract)
     },
     stopAutoRefresh() {
@@ -137,7 +142,11 @@ export default {
         this.printTextToConsole("tx mined")
       } catch (e) {
         console.warn(e);
-        this.$notify(e.toString())
+        this.$notify({
+          type: "danger",
+          timeout: 1500,
+          message: e.toString()
+        });
         this.printTextToConsole(`Tx errored:  ${e.toString()}`);
       }
     },
@@ -170,7 +179,11 @@ export default {
       } catch (e) {
         this.token.warn = "you dont have shit jeet"
         console.error(e)
-        this.$notify(e.toString())
+        this.$notify({
+          type: "danger",
+          timeout: 1500,
+          message: e.toString()
+        });
 
         return 0;
       }
@@ -193,7 +206,11 @@ export default {
       } catch (e) {
         this.token.warn = "Balance 0"
         console.warn(e)
-        this.$notify(e.toString())
+        this.$notify({
+          type: "danger",
+          timeout: 1500,
+          message: e.toString()
+        });
         return 0;
       }
     },
@@ -223,7 +240,11 @@ export default {
         this.isLoading = false;
       } catch (e) {
         console.error(e)
-        this.$notify(e.toString())
+        this.$notify({
+          type: "danger",
+          timeout: 1500,
+          message: e.toString()
+        });
       }
 
     },
@@ -242,7 +263,11 @@ export default {
         }
       } catch (e) {
         console.warn(e.toString())
-        this.$notify(e.toString())
+        this.$notify({
+            type: "danger",
+            timeout: 1500,
+            message: e.toString()
+          });
       }
     },
     async pasteContract() {
@@ -257,7 +282,7 @@ export default {
       let eth_to_receive = (this.currentTokenBalanceInEth)
       if (this.slippage < 100) {
         eth_to_receive = eth_to_receive - (eth_to_receive * this.slippage) / 100;
-      }else{
+      } else {
         eth_to_receive = 0;
       }
       eth_to_receive = eth_to_receive.toFixed(6)
@@ -296,7 +321,11 @@ export default {
         this.isLoading = false;
       } catch (e) {
         console.error(e)
-        this.$notify(e.toString())
+        this.$notify({
+            type: "danger",
+            timeout: 1500,
+            message: e.toString()
+          });
 
       }
     },
@@ -340,6 +369,12 @@ export default {
       }
 
     },
+    async checkForCurrentToken() {
+      if (this.currentToken) {
+        this.targetContract = this.currentToken;
+        await this.max();
+      }
+    },
     async getWalletBalance(address) {
       this.isLoading = true;
       this.walletBalance = await this.httpsProvider.getBalance(address);
@@ -357,6 +392,8 @@ export default {
     this.wallet = new ethers.Wallet(this._private.toString('hex'), this.httpsProvider);
     this.getWalletBalance(this._address);
     this.tryImportProfile();
+    this.checkForCurrentToken();
+
   },
   beforeDestroy() {
 
@@ -368,5 +405,4 @@ export default {
   border: 1px solid grey;
   border-radius: 25px;
   padding: 2%;
-}
-</style>
+}</style>
