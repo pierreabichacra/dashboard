@@ -32,7 +32,7 @@
       </div>
     </div>
     <br>
-    <div v-if="wallets.length > 0">
+    <div v-if="wallets.length > 0" class="mb-3">
       <base-button @click="guiRefresh = !guiRefresh">double click to reset all wallets</base-button>
       <base-button @click="refreshGas">{{ currentGwei }}</base-button>
       <div class="row">
@@ -47,8 +47,22 @@
           <base-button @click="refreshWallets">
           <i class="tim-icons icon-refresh-02"></i>
         </base-button>
-
+        <base-button title="click to manage wallets file" @click="editWallets = !editWallets">
+          <i class="tim-icons icon-settings-gear-63"></i>
+        </base-button>
+        <base-button title="click to add a wallet in your new file" @click="addWalletToFile">
+          +
+        </base-button>
         </div>
+      </div>
+    </div>
+
+    <div class="row" v-if="editWallets">
+      <div v-for="(w, walletIndex) in wallets" class="col" :key="`_${w.address}`">
+        <base-input type="text" placeholder="Address" :value="w.address" disabled></base-input>
+        <base-button  title="click to remove this wallet" @click="removeWallet(walletIndex)">
+          <i class="tim-icons icon-simple-remove"></i>
+        </base-button>
       </div>
     </div>
 
@@ -85,12 +99,26 @@ export default {
       chartRefresh: true,
       token_address: "",
       token_owners: [],
+      editWallets: false,
     }
   },
   computed: {
 
   },
   methods: {
+    addWalletToFile(){
+      let prevWallets = this.wallets;
+      this.wallets = [];
+      for(let i = 0 ; i < prevWallets.length; i++){
+        this.name = prevWallets[i].name;
+        this.add = prevWallets[i].address;
+        this.priv = prevWallets[i].private;
+        this.addWallet();
+      }
+    },
+    removeWallet(wIndex){
+      this.wallets.splice(wIndex, 1)
+    },
     openChart(address) {
       this.chartToken = address;
     },
@@ -112,7 +140,6 @@ export default {
     },
     refreshWallets(){
       this.token_owners = this.wallets.map(x=> {return x.address})
-      console.log(this.token_owners)
       this.token_address = ""
     },
     async checkWalletsContainingTokenAddress() {
@@ -136,7 +163,6 @@ export default {
       ];
       let contract_address = this.token_address;
       let adresses_to_check = this.wallets.map(x => { return x.address });
-      console.log(adresses_to_check)
       let contract = new this.web3.eth.Contract(minABI, contract_address);
       let owners = [];
       for (let i = 0; i < adresses_to_check.length; i++) {
@@ -160,8 +186,17 @@ export default {
       let encrypted = this.CryptoJS.AES.encrypt(JSON.stringify(this.preWallets), "_1_" + this.enc).toString();
       var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(encrypted);
       var dlAnchorElem = document.getElementById('downloadAnchorElem');
-      dlAnchorElem.setAttribute("href", dataStr);
-      dlAnchorElem.setAttribute("download", "myShit.json");
+      if(dlAnchorElem){
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", "myShit.json");  
+      }else{
+        setTimeout(() => {
+          dlAnchorElem = document.getElementById('downloadAnchorElem');
+          dlAnchorElem.setAttribute("href", dataStr);
+          dlAnchorElem.setAttribute("download", "myShit.json");  
+        }, 1000);
+      }
+      
     },
     async tryImportWallets(e) {
       console.log("try import")
