@@ -1,5 +1,6 @@
 <template>
   <div class="easyswapcontainer">
+    <h1>DOESNT WORK!!!!</h1>
     <small style="cursor: pointer;" @click="getWalletBalance(_address)" v-if="walletBalance">{{ walletBalance }} eth
       <a :href="txAvailable" v-if="txAvailable" target="_blank">TX</a>
       <loading v-if="isLoading" />
@@ -50,8 +51,7 @@
 import Web3 from "web3";
 import loading from "@/pages/custom_components/loading.vue";
 import TokenAbi from "@/ABIS/Token.json";
-import UniswapAbi from "@/ABIS/UniswapABI.json";
-import UniswapV3ABI from "@/ABIS/UniswapV3ABI.json"
+import UniversalRouter from "@/ABIS/UniversalRouter.json"
 import UniswapSwapRouterABI from "@/ABIS/UniswapSwapRouterABI.json"
 import { ethers, BigNumber, providers, Transaction, FixedNumber } from "ethers";
 import { ChainId, Token, WETH, Fetcher, Route, Trade, TradeType, Percent } from '@uniswap/sdk';
@@ -96,7 +96,7 @@ export default {
       quoter2Address: "0x61fFE014bA17989E743c5F6cB21bF9697530B21e",
       nonce: 0,
       wallet: null,
-      httpsProvider: null,
+      httpsProvider: "https://rpc.mevblocker.io/",
       v3Fee: '3000',
     }
   },

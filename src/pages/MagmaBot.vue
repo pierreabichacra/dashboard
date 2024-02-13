@@ -614,6 +614,7 @@ export default {
         this.isLoading = false;
         return result;
       } catch (e) {
+        console.log(e)
         this.printTextToConsole(e.toString())
         this.isLoading = false;
         return 0;

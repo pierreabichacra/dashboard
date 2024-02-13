@@ -215,8 +215,7 @@ export default {
     // },
   },
   mounted() {
-    let quickNode = "https://proportionate-autumn-tab.discover.quiknode.pro/20a9f7f36c3453d70819435fb628f3aeaf576079/";
-    let cNode = "https://eth-mainnet.g.alchemy.com/v2/0mzc_JvS6nm4TuDnUbkN3jcW0V2gKnBY";
+    let quickNode = "https://rpc.mevblocker.io/";
     this.web3 = new Web3(quickNode);
     this.httpsProvider = new ethers.providers.JsonRpcProvider(quickNode);
     this.wallet = new ethers.Wallet(this._private.toString('hex'), this.httpsProvider);

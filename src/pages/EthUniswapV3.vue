@@ -76,7 +76,7 @@ export default {
       
     },
     async refreshGas() {
-      let cNode = "https://eth-mainnet.g.alchemy.com/v2/0mzc_JvS6nm4TuDnUbkN3jcW0V2gKnBY";
+      let cNode = "https://rpc.mevblocker.io/";
       this.web3 = new Web3(cNode);
       this.currentGwei = 0;
       let gas = await this.web3.eth.getGasPrice();

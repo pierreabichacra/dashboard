@@ -6,6 +6,7 @@
         <sidebar-link to="/belongings" :name="'Multi Jeet'" icon="tim-icons icon-wallet-43"/>
         <sidebar-link to="/interactions" :name="'Interact'" icon="tim-icons icon-delivery-fast"/>
         <sidebar-link to="/uniswapv3" :name="'Uniswap V3'" icon="tim-icons icon-coins"/>
+        <sidebar-link to="/execute404" :name="'404'" icon="tim-icons icon-coins"/>
         <!-- <sidebar-link to="/icons" :name="$t('sidebar.icons')" icon="tim-icons icon-atom"/>
         <sidebar-link to="/maps" :name="$t('sidebar.maps')" icon="tim-icons icon-pin"/>
         <sidebar-link to="/notifications" :name="$t('sidebar.notifications')" icon="tim-icons icon-bell-55"/>
