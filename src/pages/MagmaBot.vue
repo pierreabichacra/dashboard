@@ -124,22 +124,6 @@
         </card>
         <div class="row">
           <div class="col">
-            <!-- <card type="info">
-              info about wallet <small class="text-warning">file extension should be in json</small>
-              <p>
-                the file to import should look like this <span class="text-success"> [{"name": "wallet 1", "address":
-                  "0xaef034f...", "private": "0xaef43efbcd4..."}]</span><br>
-                for 2 wallets and more:<br>
-                <span class="text-success">
-                  [
-                  <br>{"name": "wallet 1", "address": "0xaef034f...", "private": "0xaef43efbcd4..."},<br> {"name": "wallet
-                  2", "address": "0xbef034f...", "private": "0xbef43efbcd4..."},
-                  <br> ...and so on for more wallets
-                  <br>
-                  ]
-                </span>
-              </p>
-            </card> -->
           </div>
           <div class="col">
             <card type="info">
