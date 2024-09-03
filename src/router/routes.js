@@ -9,6 +9,9 @@ const Belongings = () => import(/* webpackChunkName: "common" */ "@/pages/Belong
 const EthUniswapV3 = () => import(/* webpackChunkName: "common" */ "@/pages/EthUniswapV3.vue");
 const Execute404 = () => import(/* webpackChunkName: "common" */ "@/pages/Execute404.vue");
 const Interactions = () => import(/* webpackChunkName: "common" */ "@/pages/Interactions.vue");
+const Dumbot = () => import(/* webpackChunkName: "common" */ "@/pages/Dumbot.vue");
+const EtherVista = () => import(/* webpackChunkName: "common" */ "@/pages/EtherVista.vue");
+const Spammer = () => import(/* webpackChunkName: "common" */ "@/pages/Spammer.vue");
 const Notifications = () => import(/* webpackChunkName: "common" */"@/pages/Notifications.vue");
 const Icons = () => import(/* webpackChunkName: "common" */ "@/pages/Icons.vue");
 const Maps = () => import(/* webpackChunkName: "common" */ "@/pages/Maps.vue");
@@ -45,6 +48,21 @@ const routes = [
         path: "interactions",
         name: "Interactions",
         component: Interactions
+      },
+      {
+        path: "DumBot",
+        name: "Dumbot",
+        component: Dumbot
+      },
+      {
+        path: "Spammer",
+        name: "Spammer",
+        component: Spammer
+      },
+      {
+        path: "EtherVista",
+        name: "EtherVista",
+        component: EtherVista
       },
       {
         path: "profile",

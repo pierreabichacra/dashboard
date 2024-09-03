@@ -7,6 +7,9 @@
         <sidebar-link to="/interactions" :name="'Interact'" icon="tim-icons icon-delivery-fast"/>
         <sidebar-link to="/uniswapv3" :name="'Uniswap V3'" icon="tim-icons icon-coins"/>
         <sidebar-link to="/execute404" :name="'tracker'" icon="tim-icons icon-coins"/>
+        <sidebar-link to="/dumbot" :name="'DumBot'" icon="tim-icons icon-coins"/>
+        <sidebar-link to="/spammer" :name="'Spammer'" icon="tim-icons icon-coins"/>
+        <sidebar-link to="/etherVista" :name="'EtherVista'" icon="tim-icons icon-atom"/>
         <!-- <sidebar-link to="/icons" :name="$t('sidebar.icons')" icon="tim-icons icon-atom"/>
         <sidebar-link to="/maps" :name="$t('sidebar.maps')" icon="tim-icons icon-pin"/>
         <sidebar-link to="/notifications" :name="$t('sidebar.notifications')" icon="tim-icons icon-bell-55"/>

@@ -1,0 +1,126 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "guest",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "permission",
+				"type": "bool"
+			}
+		],
+		"name": "addGuest",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "maxTx",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address[]",
+				"name": "path",
+				"type": "address[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "recipients",
+				"type": "address[]"
+			},
+			{
+				"internalType": "uint256",
+				"name": "minTaxSwap",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "maxTaxSwap",
+				"type": "uint256"
+			}
+		],
+		"name": "DumpnBuy",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "maxTx",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address[]",
+				"name": "path",
+				"type": "address[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "recipients",
+				"type": "address[]"
+			},
+			{
+				"internalType": "uint256",
+				"name": "minTaxSwap",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "maxTaxSwap",
+				"type": "uint256"
+			}
+		],
+		"name": "DumpnBuyRepeat",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "giveBack",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "leaveHome",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "fallback"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "receive"
+	}
+]
