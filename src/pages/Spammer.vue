@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <base-input :label="`RPC`" placeholder="RPC" @click="changeNode" v-model="currentChosenRPC"></base-input>
+    <base-input :label="`RPC`" placeholder="RPC" @change="changeNode" v-model="currentChosenRPC"></base-input>
 
     <div>
       <h5>{{ token.name }} {{ token.name ? '/ ' : '' }} {{ token.symbol }}</h5>
@@ -132,6 +132,7 @@ export default {
     stopInterval() {
       clearInterval(this.intervalID);
       this.intervalID = -1
+      this.danger("spamming stopped")
     },
     async startSpamming() {
       return await new Promise(resolve => {
@@ -162,8 +163,8 @@ export default {
 
     async prpepareRawTxData() {
       var contract = new this.web3.eth.Contract(SPAM_ABI, this.web3.utils.toChecksumAddress(this.spammiosAddress), { from: this.web3.utils.toChecksumAddress(this.recipients[0].address) });
-      var ethAmountToBuyWith = this.web3.utils.toWei((Number(this.eth_value) + Number(this.tip)).toString(), 'ether');
-      let tipAmount = BigNumber.from(this.web3.utils.toWei(this.tip, 'ether'));
+      var ethAmountToBuyWith = BigNumber.from(this.web3.utils.toWei(`${Number(this.eth_value) + Number(this.tip)}`, 'ether'));
+      let tipAmount = BigNumber.from(this.web3.utils.toWei(`${this.tip}`, 'ether'));
       ethAmountToBuyWith = BigNumber.from(ethAmountToBuyWith);
       console.log(ethAmountToBuyWith)
       let maxTxTokens = BigNumber.from(Number(this.max_tx)).mul(BigNumber.from(10).pow(BigNumber.from(this.token.decimals)))
@@ -175,9 +176,9 @@ export default {
       await this.refreshGas()
       var rawTransaction = {
         "from": this.recipients[0].address,
-        "maxFeePerGas": this.web3.utils.toHex(Number(this.currentGwei) + Number(this.web3.utils.toWei(this.gweiUsed, 'gwei'))),
-        "maxPriorityFeePerGas": this.web3.utils.toHex(Number(this.currentGwei) + Number(this.web3.utils.toWei(this.gweiUsed, 'gwei'))),
-        "gasLimit": this.web3.utils.toHex(this.gasLimitUsed),
+        "maxFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
+        "maxPriorityFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
+        "gasLimit": BigNumber.from(this.gasLimitUsed)._hex,
         "to": this.spammiosAddress,
         "value": ethAmountToBuyWith._hex,
         "data": data.encodeABI(),
@@ -295,7 +296,7 @@ export default {
           }
         }).catch(error => {
           this.danger(error);
-          console.error('Error:', error);
+          console.log('Error:', error);
         });
 
       } catch (e) {
