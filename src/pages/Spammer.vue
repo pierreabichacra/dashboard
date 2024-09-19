@@ -66,11 +66,13 @@
       </div>
     </div>
 
-    <div class="row mt-5">
-      <div class="col-12 col-sm-6">
+    <div class="row mt-5 d-flex align-items-center">
+      <div class="col-9 col-sm-4 d-flex align-items-center">
         <base-button type="primary" @click="startSpamming">start spamming</base-button>
         <base-button type="primary" @click="stopInterval" v-if="intervalID != -1">stop</base-button>
-
+      </div>
+      <div class="col-3 col-sm-2 ">
+        <base-input type="checkbox" :checked="flat" @change="toggleFlat" :label="flat ? 'flat':'max'"></base-input>
       </div>
       <div class="col-12 col-sm-6">
         <textarea v-model="infoText" name="" id="" rows="10"
@@ -86,9 +88,10 @@ import Web3 from "web3";
 import TokenABI from "@/ABIS/Token.json";
 import UniswapABI from "@/ABIS/UniswapABI.json"
 import SPAM_ABI from "@/ABIS/SpammiosABI.json"
+import SPAM_ABI2 from "@/ABIS/Spammios2ABI.json"
 
 import loading from "@/pages/custom_components/loading.vue";
-import { ethers, BigNumber, providers, Transaction, FixedNumber } from "ethers";
+import { ethers, BigNumber } from "ethers";
 
 export default {
   components: { loading },
@@ -123,26 +126,39 @@ export default {
       weth_address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
       uniswapRouterAddress: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
       spammiosAddress: "0xE61053A500877a8F26673CBd548A1F35EcC8ac08",
+      spammiosAddress2: "0x0C31fb3ef0155ECA0d4030fe72DA9e1462857FB2",
       wallet: null,
       currentChosenRPC: "",
+      flat: false,
+      txStatus:-1,
+      txWait: false,
     }
   },
   computed: {},
   methods: {
     stopInterval() {
       clearInterval(this.intervalID);
-      this.intervalID = -1
+      this.intervalID = -1;
       this.danger("spamming stopped")
+      this.txStatus = -1;
+      this.txWait = false;
     },
     async startSpamming() {
       return await new Promise(resolve => {
         this.intervalID = setInterval(() => {
-          this.checkBlockAndSendTx()
+          if(this.txWait == false){
+            this.checkBlockAndSendTx()
+          }
 
         }, 2000);
       });
 
       // this.intervalID = setInterval(this.checkBlockAndSendTx(), 2000);
+    },
+    toggleFlat(){
+      this.flat = !this.flat;
+      console.log("flat", this.flat)
+      this.info(`now using ${this.flat ? 'flat with min token amount, put 0 for slip 100%': 'get max tx'}`)
     },
     async refreshGas() {
       this.currentGwei = 0;
@@ -162,7 +178,7 @@ export default {
     },
 
     async prpepareRawTxData() {
-      var contract = new this.web3.eth.Contract(SPAM_ABI, this.web3.utils.toChecksumAddress(this.spammiosAddress), { from: this.web3.utils.toChecksumAddress(this.recipients[0].address) });
+      var contract = new this.web3.eth.Contract(SPAM_ABI2, this.web3.utils.toChecksumAddress(this.spammiosAddress2), { from: this.web3.utils.toChecksumAddress(this.recipients[0].address) });
       var ethAmountToBuyWith = BigNumber.from(this.web3.utils.toWei(`${Number(this.eth_value) + Number(this.tip)}`, 'ether'));
       let tipAmount = BigNumber.from(this.web3.utils.toWei(`${this.tip}`, 'ether'));
       ethAmountToBuyWith = BigNumber.from(ethAmountToBuyWith);
@@ -179,7 +195,7 @@ export default {
         "maxFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
         "maxPriorityFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
         "gasLimit": BigNumber.from(this.gasLimitUsed)._hex,
-        "to": this.spammiosAddress,
+        "to": this.spammiosAddress2,
         "value": ethAmountToBuyWith._hex,
         "data": data.encodeABI(),
         "nonce": this.web3.utils.toHex(`${count}`),
@@ -188,8 +204,40 @@ export default {
       };
       console.log(rawTransaction)
       this.info(`gwei: ${this.gweiUsed}\ngasLimit: ${this.gasLimitUsed}\nvalue: ${this.eth_value} ETH\ntoken amount: ${this.max_tx} \n eth value ${this.eth_value} ETH\n`)
-      this.info(`sending tx`);
-      await this.signAndSendEIP1559Transaction(rawTransaction);
+      if(this.txStatus != 1){
+        await this.signAndSendEIP1559Transaction(rawTransaction);
+      }
+    },
+    async prpepareRawTxDataForFlat() {
+      var contract = new this.web3.eth.Contract(SPAM_ABI2, this.web3.utils.toChecksumAddress(this.spammiosAddress2), { from: this.web3.utils.toChecksumAddress(this.recipients[0].address) });
+      var ethAmountToBuyWith = BigNumber.from(this.web3.utils.toWei(`${Number(this.eth_value) + Number(this.tip)}`, 'ether'));
+      let tipAmount = BigNumber.from(this.web3.utils.toWei(`${this.tip}`, 'ether'));
+      ethAmountToBuyWith = BigNumber.from(ethAmountToBuyWith);
+      console.log(ethAmountToBuyWith)
+      let minTokens = BigNumber.from(Number(this.max_tx)).mul(BigNumber.from(10).pow(BigNumber.from(this.token.decimals)))
+      let path = [this.web3.utils.toChecksumAddress(this.weth_address), this.web3.utils.toChecksumAddress(this.token_address)]
+
+      var data = contract.methods.BuyManyFlat(minTokens._hex, path, this.recipients_address, tipAmount._hex);
+      var count = await this.getCurrentNonce(this.web3.utils.toChecksumAddress(this.recipients[0].address));
+      console.log(count)
+      await this.refreshGas()
+      var rawTransaction = {
+        "from": this.recipients[0].address,
+        "maxFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
+        "maxPriorityFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
+        "gasLimit": BigNumber.from(this.gasLimitUsed)._hex,
+        "to": this.spammiosAddress2,
+        "value": ethAmountToBuyWith._hex,
+        "data": data.encodeABI(),
+        "nonce": this.web3.utils.toHex(`${count}`),
+        "type": 2,
+        "chainId": 1,
+      };
+      console.log(rawTransaction)
+      this.info(`gwei: ${this.gweiUsed}\ngasLimit: ${this.gasLimitUsed}\nvalue: ${this.eth_value} ETH\ntoken amount: ${this.max_tx} \n eth value ${this.eth_value} ETH\n`)
+      if(this.txStatus != 1){
+        await this.signAndSendEIP1559Transaction(rawTransaction);
+      }
     },
 
     async checkBlockAndSendTx() {
@@ -198,10 +246,16 @@ export default {
       this.web3.eth.getBlockNumber(async function (error, curBlk) {
         self.info("newest block is " + curBlk)
         console.log("cheking block " + curBlk)
-        if (curBlk > self.currentBlock) {
+        if (curBlk > self.currentBlock && self.txStatus != 1) {
           self.info("sending tx for block " + curBlk);
           self.currentBlock = curBlk
-          await self.prpepareRawTxData();
+          if(self.flat){
+            console.log("sending for flat")
+            await self.prpepareRawTxDataForFlat();
+          }else{
+            console.log("sending for max")
+            await self.prpepareRawTxData();
+          }
           return curBlk
         }
       });
@@ -285,17 +339,24 @@ export default {
         const signedTx = await this.wallet.signTransaction(rawTransaction);
         const txHash = ethers.utils.keccak256(signedTx);
         this.info("sending \n" + txHash);
+
         let tx = await this.httpsProvider.sendTransaction(signedTx);
-        window.open(`https://etherscan.io/tx/${txHash}`, '_blank')
+        this.txWait = true;
         tx.wait().then(receipt => {
           if (receipt.status === 1) {
-            this.success('Transaction succeeded:', receipt.hash);
+            this.txStatus = receipt.status;
+            this.txWait = false;
             this.stopInterval();
+            this.success('Transaction succeeded:', receipt.hash);
+            window.open(`https://etherscan.io/tx/${txHash}`, '_blank')
+
           } else {
+            this.txStatus = receipt.status;
+            this.txWait = false;
             this.danger('Transaction reverted:', receipt.hash);
           }
         }).catch(error => {
-          this.danger(error);
+          this.danger("errored");
           console.log('Error:', error);
         });
 
@@ -366,7 +427,7 @@ export default {
       this.isLoading = false;
     },
 
-    changeNode(){
+    changeNode() {
       this.web3 = new Web3(this.currentChosenRPC);
       this.httpsProvider = new ethers.providers.JsonRpcProvider(this.currentChosenRPC);
       localStorage.setItem("rpc", this.currentChosenRPC);
@@ -376,10 +437,10 @@ export default {
   },
   mounted() {
     let publicNode;
-    if(localStorage.getItem("rpc")){
+    if (localStorage.getItem("rpc")) {
       publicNode = localStorage.getItem("rpc");
       this.currentChosenRPC = localStorage.getItem("rpc");
-    }else{
+    } else {
       publicNode = "https://eth.drpc.org";
       this.currentChosenRPC = publicNode
     }
