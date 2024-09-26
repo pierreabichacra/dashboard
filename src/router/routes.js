@@ -12,6 +12,7 @@ const Interactions = () => import(/* webpackChunkName: "common" */ "@/pages/Inte
 const Dumbot = () => import(/* webpackChunkName: "common" */ "@/pages/Dumbot.vue");
 const EtherVista = () => import(/* webpackChunkName: "common" */ "@/pages/EtherVista.vue");
 const Spammer = () => import(/* webpackChunkName: "common" */ "@/pages/Spammer.vue");
+const BlocksView = () => import(/* webpackChunkName: "common" */ "@/pages/BlocksView.vue");
 const Notifications = () => import(/* webpackChunkName: "common" */"@/pages/Notifications.vue");
 const Icons = () => import(/* webpackChunkName: "common" */ "@/pages/Icons.vue");
 const Maps = () => import(/* webpackChunkName: "common" */ "@/pages/Maps.vue");
@@ -58,6 +59,11 @@ const routes = [
         path: "Spammer",
         name: "Spammer",
         component: Spammer
+      },  
+       {
+        path: "blocks",
+        name: "blocks",
+        component: BlocksView
       },
       {
         path: "EtherVista",

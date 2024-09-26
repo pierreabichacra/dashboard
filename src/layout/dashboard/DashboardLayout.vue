@@ -10,6 +10,7 @@
         <sidebar-link to="/dumbot" :name="'DumBot'" icon="tim-icons icon-coins"/>
         <sidebar-link to="/spammer" :name="'Spammer'" icon="tim-icons icon-coins"/>
         <sidebar-link to="/etherVista" :name="'EtherVista'" icon="tim-icons icon-atom"/>
+        <sidebar-link to="/blocks" :name="'BLOCKS'" icon="tim-icons icon-atom"/>
         <!-- <sidebar-link to="/icons" :name="$t('sidebar.icons')" icon="tim-icons icon-atom"/>
         <sidebar-link to="/maps" :name="$t('sidebar.maps')" icon="tim-icons icon-pin"/>
         <sidebar-link to="/notifications" :name="$t('sidebar.notifications')" icon="tim-icons icon-bell-55"/>

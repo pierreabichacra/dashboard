@@ -215,7 +215,7 @@ export default {
     // },
   },
   mounted() {
-    let quickNode = "https://rpc.mevblocker.io/";
+    let quickNode = "http://78.46.76.120:8545";
     this.web3 = new Web3(quickNode);
     this.httpsProvider = new ethers.providers.JsonRpcProvider(quickNode);
     this.wallet = new ethers.Wallet(this._private.toString('hex'), this.httpsProvider);

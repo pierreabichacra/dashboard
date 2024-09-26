@@ -1,86 +1,7 @@
 <template>
   <div class="container">
     <base-input :label="`RPC`" placeholder="RPC" @change="changeNode" v-model="currentChosenRPC"></base-input>
-
-    <div>
-      <h5>{{ token.name }} {{ token.name ? '/ ' : '' }} {{ token.symbol }}</h5>
-      <h5>{{ token.totalSupply ? `total supply: ${token.totalSupply}` : '' }}</h5>
-      <h5>{{ token.decimals ? `decimals: ${token.decimals}` : '' }} </h5>
-    </div>
-
-    <base-input :label="`token address`" placeholder="token address" @click="pasteContract" v-model="token_address">
-
-    </base-input>
-
-    <div class="row d-flex align-items-center my-3">
-      <div class="col-3">
-        <base-input :label="`Max TX`" placeholder="Max TX" v-model="max_tx" @change="changeMaxTxTokens"></base-input>
-      </div>
-      <div class="col-2">
-        <base-input :label="`GWEI extra`" placeholder="GWEI" v-model="gweiUsed"></base-input>
-        <base-input :label="`Gas Limit`" placeholder="GAS LIMIT" v-model="gasLimitUsed"></base-input>
-      </div>
-      <div class="col-2">
-        <base-input step="0.1" type="number" :label="`ETH value`" placeholder="eth value"
-          v-model="eth_value"></base-input>
-      </div>
-      <div class="col-2">
-        <base-input step="0.1" type="number" :label="`TIP value`" placeholder="tip value" v-model="tip"></base-input>
-      </div>
-      <div class="col-2">
-        <base-input type="number" min="0" :label="`token % `" placeholder="token %" v-model="max_tx_percent"
-          @change="changeMaxTxPercent">
-        </base-input>
-      </div>
-    </div>
-
-
-    <div class="easyswapcontainer d-flex align-items-center my-3 row" v-if="recipients.length > 0">
-      <small class="text-success">{{ recipients_address }}</small>
-      <div class="col-12" v-for="(r, i) in recipients" :key="i" :label="`recipient ${i + 1}`">
-        <div class="row d-flex align-items-center">
-          <div class="col-1">
-            <label for="">{{ r.name }}</label>
-          </div>
-          <div class="col-10">
-            <base-input v-model="r.address" disabled></base-input>
-          </div>
-          <div class="col-1">
-            <base-input type="checkbox" @change="addRemoveWallet(r.address)" style="width='50%'"
-              v-if="i != 0"></base-input>
-
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-
-    <div class="row" v-if="recipients.length == 0">
-      <p class="col-12">name address priv</p>
-      <div class="row">
-        <input type="password" v-model="enc" placeholder="password">
-        <label for="" class="mr-5">import wallets to snipe from</label> <input type="file" @change="tryImportWallets"
-          class="form" accept="application/JSON" style="width: 120px; font-size: 10px;" v-if="recipients.length == 0" />
-
-      </div>
-    </div>
-
-    <div class="row mt-5 d-flex align-items-center">
-      <div class="col-9 col-sm-4 d-flex align-items-center">
-        <base-button type="primary" @click="startSpamming">start spamming</base-button>
-        <base-button type="primary" @click="stopInterval" v-if="intervalID != -1">stop</base-button>
-      </div>
-      <div class="col-3 col-sm-2 ">
-        <base-input type="checkbox" :checked="flat" @change="toggleFlat" :label="flat ? 'flat' : 'max'"></base-input>
-      </div>
-      <div class="col-12 col-sm-6">
-        <textarea v-model="infoText" name="" id="" rows="10"
-          style="width: 100%; background-color: black; color: limegreen;"></textarea>
-      </div>
-
-
-    </div>
+    <base-button type="primary" @click="startSpamming" style="width: 100%; height: 100%;">{{currentBlock}} </base-button>
   </div>
 </template>
 <script>
@@ -130,7 +51,7 @@ export default {
       wallet: null,
       currentChosenRPC: "",
       flat: false,
-      txStatus: -1,
+      txStatus:-1,
       txWait: false,
     }
   },
@@ -143,23 +64,21 @@ export default {
       this.txStatus = -1;
       this.txWait = false;
     },
-
+    
     async startSpamming() {
       return await new Promise(resolve => {
         this.intervalID = setInterval(() => {
-          if (this.txWait == false) {
             this.checkBlockAndSendTx()
-          }
 
         }, 2000);
       });
 
       // this.intervalID = setInterval(this.checkBlockAndSendTx(), 2000);
     },
-    toggleFlat() {
+    toggleFlat(){
       this.flat = !this.flat;
       console.log("flat", this.flat)
-      this.info(`now using ${this.flat ? 'flat with min token amount, put 0 for slip 100%' : 'get max tx'}`)
+      this.info(`now using ${this.flat ? 'flat with min token amount, put 0 for slip 100%': 'get max tx'}`)
     },
     async refreshGas() {
       this.currentGwei = 0;
@@ -205,7 +124,7 @@ export default {
       };
       console.log(rawTransaction)
       this.info(`gwei: ${this.gweiUsed}\ngasLimit: ${this.gasLimitUsed}\nvalue: ${this.eth_value} ETH\ntoken amount: ${this.max_tx} \n eth value ${this.eth_value} ETH\n`)
-      if (this.txStatus != 1) {
+      if(this.txStatus != 1){
         await this.signAndSendEIP1559Transaction(rawTransaction);
       }
     },
@@ -236,7 +155,7 @@ export default {
       };
       console.log(rawTransaction)
       this.info(`gwei: ${this.gweiUsed}\ngasLimit: ${this.gasLimitUsed}\nvalue: ${this.eth_value} ETH\ntoken amount: ${this.max_tx} \n eth value ${this.eth_value} ETH\n`)
-      if (this.txStatus != 1) {
+      if(this.txStatus != 1){
         await this.signAndSendEIP1559Transaction(rawTransaction);
       }
     },
@@ -244,19 +163,10 @@ export default {
     async checkBlockAndSendTx() {
       let self = this;
       console.log(this.currentBlock)
+      console.log(this.web3.eth.blockNumber)
       this.web3.eth.getBlockNumber(async function (error, curBlk) {
-        self.info("newest block is " + curBlk)
-        console.log("cheking block " + curBlk)
         if (curBlk > self.currentBlock && self.txStatus != 1) {
-          self.info("sending tx for block " + curBlk);
           self.currentBlock = curBlk
-          if (self.flat) {
-            console.log("sending for flat")
-            await self.prpepareRawTxDataForFlat();
-          } else {
-            console.log("sending for max")
-            await self.prpepareRawTxData();
-          }
           return curBlk
         }
       });
@@ -357,12 +267,8 @@ export default {
             this.danger('Transaction reverted:', receipt.hash);
           }
         }).catch(error => {
-          this.txStatus = -1;
-          this.txWait = false;
-          this.danger('Transaction errored:', txHash);
-          if (`${error}`.indexOf('failed') == -1) {
-            console.error(error);
-          }
+          this.danger("errored");
+          console.log('Error:', error);
         });
 
       } catch (e) {
