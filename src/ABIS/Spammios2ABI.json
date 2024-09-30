@@ -53,6 +53,11 @@
 				"type": "uint256"
 			},
 			{
+				"internalType": "uint256",
+				"name": "maxTx",
+				"type": "uint256"
+			},
+			{
 				"internalType": "address[]",
 				"name": "path",
 				"type": "address[]"
@@ -105,5 +110,12 @@
 	{
 		"stateMutability": "payable",
 		"type": "receive"
+	},
+	{
+		"inputs": [],
+		"name": "returnTrue",
+		"outputs": [],
+		"stateMutability": "view",
+		"type": "function"
 	}
 ]

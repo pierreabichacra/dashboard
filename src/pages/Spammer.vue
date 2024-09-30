@@ -15,6 +15,7 @@
     <div class="row d-flex align-items-center my-3">
       <div class="col-3">
         <base-input :label="`Max TX`" placeholder="Max TX" v-model="max_tx" @change="changeMaxTxTokens"></base-input>
+        <base-input :label="`Min tokens`" placeholder="Min tokens" v-model="min_tokens" v-if="flat"></base-input>
       </div>
       <div class="col-2">
         <base-input :label="`GWEI extra`" placeholder="GWEI" v-model="gweiUsed"></base-input>
@@ -86,8 +87,6 @@
 <script>
 import Web3 from "web3";
 import TokenABI from "@/ABIS/Token.json";
-import UniswapABI from "@/ABIS/UniswapABI.json"
-import SPAM_ABI from "@/ABIS/SpammiosABI.json"
 import SPAM_ABI2 from "@/ABIS/Spammios2ABI.json"
 
 import loading from "@/pages/custom_components/loading.vue";
@@ -121,12 +120,12 @@ export default {
       max_tx: "",
       token: {},
       token_address: "",
+      min_tokens: "",
       recipients: [],
       recipients_address: [],
       weth_address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
       uniswapRouterAddress: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
-      spammiosAddress: "0xE61053A500877a8F26673CBd548A1F35EcC8ac08",
-      spammiosAddress2: "0x0C31fb3ef0155ECA0d4030fe72DA9e1462857FB2",
+      spammiosAddress2: "0xbB0A6712029553B7C9F2f00a761675EeA75d572e",
       wallet: null,
       currentChosenRPC: "",
       flat: false,
@@ -194,7 +193,7 @@ export default {
       var rawTransaction = {
         "from": this.recipients[0].address,
         "maxFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
-        "maxPriorityFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
+        "maxPriorityFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${1}`, 'gwei'))))))._hex,
         "gasLimit": BigNumber.from(this.gasLimitUsed)._hex,
         "to": this.spammiosAddress2,
         "value": ethAmountToBuyWith._hex,
@@ -215,17 +214,18 @@ export default {
       let tipAmount = BigNumber.from(this.web3.utils.toWei(`${this.tip}`, 'ether'));
       ethAmountToBuyWith = BigNumber.from(ethAmountToBuyWith);
       console.log(ethAmountToBuyWith)
-      let minTokens = BigNumber.from(Number(this.max_tx)).mul(BigNumber.from(10).pow(BigNumber.from(this.token.decimals)))
+      let minTokens = BigNumber.from(Number(this.min_tokens)).mul(BigNumber.from(10).pow(BigNumber.from(this.token.decimals)))
+      let maxTokens = BigNumber.from(Number(this.max_tx)).mul(BigNumber.from(10).pow(BigNumber.from(this.token.decimals)))
       let path = [this.web3.utils.toChecksumAddress(this.weth_address), this.web3.utils.toChecksumAddress(this.token_address)]
 
-      var data = contract.methods.BuyManyFlat(minTokens._hex, path, this.recipients_address, tipAmount._hex);
+      var data = contract.methods.BuyManyFlat(minTokens._hex, maxTokens._hex, path, this.recipients_address, tipAmount._hex);
       var count = await this.getCurrentNonce(this.web3.utils.toChecksumAddress(this.recipients[0].address));
       console.log(count)
       await this.refreshGas()
       var rawTransaction = {
         "from": this.recipients[0].address,
-        "maxFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
-        "maxPriorityFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
+        "gas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
+        "maxPriorityFeePerGas": (BigNumber.from(Number(this.web3.utils.toWei(`${5}`, 'gwei'))))._hex,
         "gasLimit": BigNumber.from(this.gasLimitUsed)._hex,
         "to": this.spammiosAddress2,
         "value": ethAmountToBuyWith._hex,
@@ -306,6 +306,10 @@ export default {
         return
       }
       this.max_tx = this.token.totalSupply * this.max_tx_percent / 100;
+      if(this.flat){
+        this.min_tokens = this.token.totalSupply * this.max_tx_percent / 100;
+        this.max_tx = this.token.totalSupply * 0.0001 / 100;
+      }
     },
     changeMaxTxTokens() {
       this.max_tx_percent = 0;
