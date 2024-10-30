@@ -1,6 +1,6 @@
 <template>
   <div class="easyswapcontainer">
-    <small style="cursor: pointer;" @click="getWalletBalance(_address)" v-if="walletBalance">{{ walletBalance }} eth
+    <small style="cursor: pointer;" @click="getWalletBalance(_address)" v-if="walletBalance">{{ walletBalance }} ETH
       <i class="tim-icons icon-chart-bar-32 mx-3 my-2 pb-1" style="cursor: pointer;" v-if="token.decimals"
         @click="showChart"></i>
       <a :href="txAvailable" v-if="txAvailable" target="_blank">TX</a>
@@ -58,8 +58,8 @@ export default {
     _address: {
       type: String,
     },
-    _private: {
-      type: String,
+    wallet: {
+      type: Object,
     },
     currentToken: {
       type: String,
@@ -84,7 +84,6 @@ export default {
       uniswapRouterAddress: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
       weth_address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
       nonce: 0,
-      wallet: null,
       httpsProvider: null,
     }
   },
@@ -273,7 +272,6 @@ export default {
     async pasteContract() {
       this.targetContract = await navigator.clipboard.readText();
       this.getCaInfo(this.targetContract);
-
     },
     async sellTokenAmount() {
       this.txAvailable = ``;
@@ -345,20 +343,6 @@ export default {
       });
     },
 
-    async tryImportWallets(e) {
-      let file_to_read = e.target.files[0];
-      var fileread = new FileReader();
-      fileread.onload = (e) => {
-        var content = e.target.result;
-        var intern = JSON.parse(content); // Array of Objects.
-        console.log(intern); // You can index every object
-        this.wallets = intern;
-        this.showWallet(this.wallets[0].address)
-      };
-      fileread.readAsText(file_to_read);
-
-      console.log(e);
-    },
     tryImportProfile() {
       let profile = JSON.parse(localStorage.getItem("profile"));
       if (profile) {
@@ -383,14 +367,14 @@ export default {
       this.isLoading = false;
     },
   },
-  mounted() {
+  async mounted() {
     let publicNode = "http://78.46.76.120:8545";
     this.web3 = new Web3(publicNode);
     this.httpsProvider = new ethers.providers.JsonRpcProvider(publicNode);
     this.wallet = new ethers.Wallet(this._private.toString('hex'), this.httpsProvider);
     this.getWalletBalance(this._address);
     this.tryImportProfile();
-    this.checkForCurrentToken();
+    await this.checkForCurrentToken();
 
   },
   beforeDestroy() {

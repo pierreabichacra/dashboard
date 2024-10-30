@@ -175,7 +175,7 @@ export default {
       this.token_owners = owners;
     },
     async refreshGas() {
-      let cNode = "https://rpc.mevblocker.io/";
+      let cNode = "http://78.46.76.120:8545";
       this.web3 = new Web3(cNode);
       this.currentGwei = 0;
       let gas = await this.web3.eth.getGasPrice();

@@ -6,11 +6,18 @@
       <h5>{{ token.name }} {{ token.name ? '/ ' : '' }} {{ token.symbol }}</h5>
       <h5>{{ token.totalSupply ? `total supply: ${token.totalSupply}` : '' }}</h5>
       <h5>{{ token.decimals ? `decimals: ${token.decimals}` : '' }} </h5>
+      <h5 class="text-danger"> accumulated fees from reverts: {{ accumulatedFees }} ETH</h5>
     </div>
 
-    <base-input :label="`token address`" placeholder="token address" @click="pasteContract" v-model="token_address">
-
-    </base-input>
+    <div class="row d-flex align-items-center">
+      <div class="col-10">
+        <base-input :label="`token address`" placeholder="token address" @click="pasteContract"
+          v-model="token_address"></base-input>
+      </div>
+      <div class="col-2">
+        <base-button type="primary" class="mt-3" @click="resetEverything">reset</base-button>
+      </div>
+    </div>
 
     <div class="row d-flex align-items-center my-3">
       <div class="col-3">
@@ -24,6 +31,8 @@
       <div class="col-2">
         <base-input step="0.1" type="number" :label="`ETH value`" placeholder="eth value"
           v-model="eth_value"></base-input>
+        <base-input step="0.1" type="number" :label="`Priority fee`" placeholder="priority fee"
+          v-model="prioFee"></base-input>
       </div>
       <div class="col-2">
         <base-input step="0.1" type="number" :label="`TIP value`" placeholder="tip value" v-model="tip"></base-input>
@@ -79,8 +88,12 @@
         <textarea v-model="infoText" name="" id="" rows="10"
           style="width: 100%; background-color: black; color: limegreen;"></textarea>
       </div>
+    </div>
 
-
+    <div class="row" v-if="txSucceded">
+      <div class="col-6 my-2" v-for="r in easySwapWallets" :key="r.address" >
+        <easy-swap-v-2 :_address="r.address" :wallet="r.wallet" :currentToken="token_address" />
+      </div>
     </div>
   </div>
 </template>
@@ -91,9 +104,10 @@ import SPAM_ABI2 from "@/ABIS/Spammios2ABI.json"
 
 import loading from "@/pages/custom_components/loading.vue";
 import { ethers, BigNumber } from "ethers";
+import EasySwapV2 from "./EasySwapV2.vue";
 
 export default {
-  components: { loading },
+  components: { loading, EasySwapV2 },
   props: {
     _address: {
       type: String,
@@ -104,6 +118,8 @@ export default {
   },
   data() {
     return {
+      prioFee: 1,
+      accumulatedFees: 0,
       tip: 0,
       infoText: "",
       eth_value: 0,
@@ -131,10 +147,31 @@ export default {
       flat: false,
       txStatus: -1,
       txWait: false,
+      easySwapWallets: [],
+      txSucceded: false,
     }
   },
   computed: {},
   methods: {
+    resetEverything() {
+      this.prioFee = 1;
+      this.accumulatedFees = 0;
+      this.tip = 0,
+      this.infoText = ""
+      this.eth_value = 0
+      this.currentBlock = 0
+      this.gweiUsed = 20
+      this.gasLimitUsed = 1000000
+      this.max_tx_percent = ""
+      this.max_tx = ""
+      this.token = {}
+      this.token_address = ""
+      this.min_tokens = ""
+      this.recipients_address = []
+      this.txSucceded = false
+      this.stopInterval()
+
+    },
     stopInterval() {
       clearInterval(this.intervalID);
       this.intervalID = -1;
@@ -193,7 +230,7 @@ export default {
       var rawTransaction = {
         "from": this.recipients[0].address,
         "maxFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
-        "maxPriorityFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${1}`, 'gwei'))))))._hex,
+        "maxPriorityFeePerGas": (BigNumber.from(Number(this.web3.utils.toWei(`${this.prioFee}`, 'gwei'))))._hex,
         "gasLimit": BigNumber.from(this.gasLimitUsed)._hex,
         "to": this.spammiosAddress2,
         "value": ethAmountToBuyWith._hex,
@@ -276,7 +313,11 @@ export default {
           for (let i = 0; i < intern.length; i++) {
             if (i == 0) {
               this.wallet = (new ethers.Wallet(intern[i].private.toString('hex'), this.httpsProvider));
+              this.easySwapWallets.push({ "address": intern[i].address, wallet: new ethers.Wallet(intern[i].private.toString('hex'), this.httpsProvider), active: true })
+            } else {
+              this.easySwapWallets.push({ "address": intern[i].address, wallet: new ethers.Wallet(intern[i].private.toString('hex'), this.httpsProvider), active: false })
             }
+
             delete this.recipients[i].private;
           }
 
@@ -306,7 +347,7 @@ export default {
         return
       }
       this.max_tx = this.token.totalSupply * this.max_tx_percent / 100;
-      if(this.flat){
+      if (this.flat) {
         this.min_tokens = this.token.totalSupply * this.max_tx_percent / 100;
         this.max_tx = this.token.totalSupply * 0.0001 / 100;
       }
@@ -338,6 +379,18 @@ export default {
       }
     },
 
+    async getTxCost(txHash) {
+      let transaction = await this.web3.eth.getTransaction(txHash)
+      let receipt = await this.web3.eth.getTransactionReceipt(txHash)
+      console.log(transaction, receipt)
+      let gas_used = receipt['gasUsed']
+      let gas_price = transaction['gasPrice']
+      let total_cost_wei = gas_used * gas_price
+      let total_cost_eth = Web3.utils.fromWei(total_cost_wei.toString(), 'ether');
+      this.accumulatedFees += Number(total_cost_eth)
+
+    },
+
     async signAndSendEIP1559Transaction(rawTransaction) {
       // to do the flash bot tx check this link https://docs.flashbots.net/flashbots-auction/searchers/advanced/private-transaction
       try {
@@ -353,9 +406,11 @@ export default {
             this.txWait = false;
             this.stopInterval();
             this.success('Transaction succeeded:', receipt.hash);
+            this.txSucceded = true
             window.open(`https://etherscan.io/tx/${txHash}`, '_blank')
-
+            console.log(receipt)
           } else {
+            console.log(receipt)
             this.txStatus = receipt.status;
             this.txWait = false;
             this.danger('Transaction reverted:', receipt.hash);
@@ -364,6 +419,7 @@ export default {
           this.txStatus = -1;
           this.txWait = false;
           this.danger('Transaction errored:', txHash);
+          this.getTxCost(txHash)
           if (`${error}`.indexOf('failed') == -1) {
             console.error(error);
           }
