@@ -167,10 +167,8 @@ export default {
       this.token = {}
       this.token_address = ""
       this.min_tokens = ""
-      this.recipients_address = []
       this.txSucceded = false
       this.stopInterval()
-
     },
     stopInterval() {
       clearInterval(this.intervalID);
