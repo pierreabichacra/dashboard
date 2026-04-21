@@ -157,7 +157,7 @@ export default {
       recipients_address: [],
       weth_address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
       uniswapRouterAddress: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
-      spammiosAddress2: "0x7E62941F614e93165E0435532698D4eF535C67C2",
+      spammiosAddress2: "0xAAD057107a35F0ddFF4185050BF44D4f1f9B1e99",
       wallet: null,
       currentChosenRPC: "",
       flat: false,
