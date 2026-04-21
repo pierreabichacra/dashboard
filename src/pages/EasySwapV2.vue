@@ -1,5 +1,6 @@
 <template>
   <div class="easyswapcontainer">
+    <base-input label="RPC" placeholder="RPC" v-model="currentRPC" @change="changeNode"></base-input>
     <small style="cursor: pointer;" @click="getWalletBalance(_address)" v-if="walletBalance">{{ walletBalance }} ETH
       <i class="tim-icons icon-chart-bar-32 mx-3 my-2 pb-1" style="cursor: pointer;" v-if="token.decimals"
         @click="showChart"></i>
@@ -85,6 +86,8 @@ export default {
       weth_address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
       nonce: 0,
       httpsProvider: null,
+      currentRPC: "",
+      localWallet: null,
     }
   },
   computed: {
@@ -93,6 +96,13 @@ export default {
     }
   },
   methods: {
+    changeNode() {
+      this.web3 = new Web3(this.currentRPC);
+      const newProvider = new ethers.providers.JsonRpcProvider(this.currentRPC);
+      this.httpsProvider = newProvider;
+      this.localWallet = this.localWallet.connect(newProvider);
+      localStorage.setItem("rpc", this.currentRPC);
+    },
     showChart() {
       this.$parent.openChart(this.targetContract)
     },
@@ -133,7 +143,7 @@ export default {
         let tx = rawTransaction;
         tx.chainId = 1;
 
-        const signedTx = await this.wallet.signTransaction(rawTransaction);
+        const signedTx = await this.localWallet.signTransaction(rawTransaction);
         const txHash = ethers.utils.keccak256(signedTx);
         this.printLinkToConsole(txHash);
         await this.httpsProvider.sendTransaction(signedTx);
@@ -231,7 +241,7 @@ export default {
         "nonce": this.web3.utils.toHex(count)
       };
       try {
-        const signedTx = await this.wallet.signTransaction(rawTransaction);
+        const signedTx = await this.localWallet.signTransaction(rawTransaction);
         this.isLoading = true;
         let res = await this.httpsProvider.sendTransaction(signedTx);
         this.txAvailable = `https://etherscan.io/tx/${res.hash}`
@@ -310,7 +320,7 @@ export default {
       console.log(rawTransaction)
 
       try {
-        const signedTx = await this.wallet.signTransaction(rawTransaction);
+        const signedTx = await this.localWallet.signTransaction(rawTransaction);
         const txHash = ethers.utils.keccak256(signedTx);
         this.isLoading = true;
         let res = await this.httpsProvider.sendTransaction(signedTx);
@@ -368,10 +378,11 @@ export default {
     },
   },
   async mounted() {
-    let publicNode = "http://78.46.76.120:8545";
+    let publicNode = localStorage.getItem("rpc") || "https://eth.api.pocket.network";
+    this.currentRPC = publicNode;
     this.web3 = new Web3(publicNode);
     this.httpsProvider = new ethers.providers.JsonRpcProvider(publicNode);
-    this.wallet = new ethers.Wallet(this._private.toString('hex'), this.httpsProvider);
+    this.localWallet = this.wallet.connect(this.httpsProvider);
     this.getWalletBalance(this._address);
     this.tryImportProfile();
     await this.checkForCurrentToken();

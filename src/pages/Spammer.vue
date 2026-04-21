@@ -1,6 +1,7 @@
 <template>
   <div class="container">
     <base-input :label="`RPC`" placeholder="RPC" @change="changeNode" v-model="currentChosenRPC"></base-input>
+    <base-input :label="`Spammios contract: ${spammiosAddress2}`" placeholder="spammios address" @change="saveSpammiosAddress" v-model="spammiosAddress2"></base-input>
 
     <div>
       <h5>{{ token.name }} {{ token.name ? '/ ' : '' }} {{ token.symbol }}</h5>
@@ -67,13 +68,22 @@
 
 
     <div class="row" v-if="recipients.length == 0">
-      <p class="col-12">name address priv</p>
-      <div class="row">
-        <input type="password" v-model="enc" placeholder="password">
-        <label for="" class="mr-5">import wallets to snipe from</label> <input type="file" @change="tryImportWallets"
-          class="form" accept="application/JSON" style="width: 120px; font-size: 10px;" v-if="recipients.length == 0" />
-
-      </div>
+      <template v-if="!hasSavedWallets">
+        <p class="col-12">name address priv</p>
+        <div class="row">
+          <input type="password" v-model="enc" placeholder="password">
+          <label for="" class="mr-5">import wallets to snipe from</label>
+          <input type="file" @change="tryImportWallets" class="form" accept="application/JSON" style="width: 120px; font-size: 10px;" />
+        </div>
+      </template>
+      <template v-else>
+        <div class="row align-items-center">
+          <input type="password" v-model="enc" placeholder="password" :class="{ 'border-danger': loadError }">
+          <base-button type="primary" class="ml-2" @click="loadWalletsFromStorage">load saved wallets</base-button>
+          <base-button type="danger" class="ml-2" @click="clearSavedWallets">clear saved</base-button>
+        </div>
+        <small v-if="loadError" class="text-danger col-12">Wrong password. Try again or clear saved wallets.</small>
+      </template>
     </div>
 
     <div class="row mt-5 d-flex align-items-center">
@@ -88,6 +98,12 @@
         <textarea v-model="infoText" name="" id="" rows="10"
           style="width: 100%; background-color: black; color: limegreen;"></textarea>
       </div>
+    </div>
+
+    <div class="row mt-2" v-if="easySwapWallets.length > 0">
+      <base-button type="secondary" @click="txSucceded = !txSucceded">
+        {{ txSucceded ? 'hide' : 'show' }} swap panels
+      </base-button>
     </div>
 
     <div class="row" v-if="txSucceded">
@@ -141,7 +157,7 @@ export default {
       recipients_address: [],
       weth_address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
       uniswapRouterAddress: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
-      spammiosAddress2: "0xbB0A6712029553B7C9F2f00a761675EeA75d572e",
+      spammiosAddress2: "0x7E62941F614e93165E0435532698D4eF535C67C2",
       wallet: null,
       currentChosenRPC: "",
       flat: false,
@@ -149,10 +165,45 @@ export default {
       txWait: false,
       easySwapWallets: [],
       txSucceded: false,
+      hasSavedWallets: false,
+      loadError: false,
     }
   },
   computed: {},
   methods: {
+    initWallets(decryptedText) {
+      var intern = JSON.parse(decryptedText);
+      this.recipients = intern;
+      this.recipients_address.push(this.recipients[0].address);
+      for (let i = 0; i < intern.length; i++) {
+        if (i == 0) {
+          this.wallet = new ethers.Wallet(intern[i].private.toString('hex'), this.httpsProvider);
+          this.easySwapWallets.push({ address: intern[i].address, wallet: new ethers.Wallet(intern[i].private.toString('hex'), this.httpsProvider), active: true });
+        } else {
+          this.easySwapWallets.push({ address: intern[i].address, wallet: new ethers.Wallet(intern[i].private.toString('hex'), this.httpsProvider), active: false });
+        }
+        delete this.recipients[i].private;
+      }
+    },
+    loadWalletsFromStorage() {
+      try {
+        const content = localStorage.getItem("wallets");
+        const decryptedText = this.$CryptoJS.AES.decrypt(content, "_1_" + this.enc).toString(this.$CryptoJS.enc.Utf8);
+        if (!decryptedText) throw new Error("wrong password");
+        this.initWallets(decryptedText);
+        this.loadError = false;
+      } catch (e) {
+        this.loadError = true;
+        this.$notify({ type: "danger", timeout: 2000, message: "Wrong password — could not load saved wallets." });
+      }
+    },
+    clearSavedWallets() {
+      localStorage.removeItem("wallets");
+      this.hasSavedWallets = false;
+      this.enc = "";
+      this.loadError = false;
+      this.success("Saved wallets cleared.");
+    },
     resetEverything() {
       this.prioFee = 1;
       this.accumulatedFees = 0;
@@ -259,8 +310,8 @@ export default {
       await this.refreshGas()
       var rawTransaction = {
         "from": this.recipients[0].address,
-        "gas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
-        "maxPriorityFeePerGas": (BigNumber.from(Number(this.web3.utils.toWei(`${5}`, 'gwei'))))._hex,
+        "maxFeePerGas": ((BigNumber.from(this.web3.utils.toHex(Number(this.currentGwei))).add(BigNumber.from(Number(this.web3.utils.toWei(`${this.gweiUsed}`, 'gwei'))))))._hex,
+        "maxPriorityFeePerGas": (BigNumber.from(Number(this.web3.utils.toWei(`${this.prioFee}`, 'gwei'))))._hex,
         "gasLimit": BigNumber.from(this.gasLimitUsed)._hex,
         "to": this.spammiosAddress2,
         "value": ethAmountToBuyWith._hex,
@@ -304,23 +355,12 @@ export default {
       fileread.onload = (e) => {
         try {
           var content = e.target.result;
-          const decryptedText = this.$CryptoJS.AES.decrypt(content, "_1_" + this.enc).toString(this.$CryptoJS.enc.Utf8)
-          var intern = JSON.parse(decryptedText); // Array of Objects.
-          this.recipients = intern;
-          this.recipients_address.push(this.recipients[0].address)
-          for (let i = 0; i < intern.length; i++) {
-            if (i == 0) {
-              this.wallet = (new ethers.Wallet(intern[i].private.toString('hex'), this.httpsProvider));
-              this.easySwapWallets.push({ "address": intern[i].address, wallet: new ethers.Wallet(intern[i].private.toString('hex'), this.httpsProvider), active: true })
-            } else {
-              this.easySwapWallets.push({ "address": intern[i].address, wallet: new ethers.Wallet(intern[i].private.toString('hex'), this.httpsProvider), active: false })
-            }
-
-            delete this.recipients[i].private;
-          }
-
+          const decryptedText = this.$CryptoJS.AES.decrypt(content, "_1_" + this.enc).toString(this.$CryptoJS.enc.Utf8);
+          this.initWallets(decryptedText);
+          localStorage.setItem("wallets", content);
+          this.hasSavedWallets = true;
         } catch (e) {
-          console.error(e)
+          console.error(e);
           this.$notify({
             type: "danger",
             timeout: 1500,
@@ -490,6 +530,10 @@ export default {
       this.isLoading = false;
     },
 
+    saveSpammiosAddress() {
+      localStorage.setItem("spammiosAddress2", this.spammiosAddress2);
+      window.location.reload();
+    },
     changeNode() {
       this.web3 = new Web3(this.currentChosenRPC);
       this.httpsProvider = new ethers.providers.JsonRpcProvider(this.currentChosenRPC);
@@ -510,6 +554,12 @@ export default {
     this.web3 = new Web3(publicNode);
     this.httpsProvider = new ethers.providers.JsonRpcProvider(publicNode);
     this.info(`using ${publicNode}`)
+    if (localStorage.getItem("wallets")) {
+      this.hasSavedWallets = true;
+    }
+    if (localStorage.getItem("spammiosAddress2")) {
+      this.spammiosAddress2 = localStorage.getItem("spammiosAddress2");
+    }
   },
   beforeDestroy() {
 
